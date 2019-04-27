@@ -1,3 +1,5 @@
+TARGET           = bootstrap.tar.bz2
+
 BINUTILS_ARCHIVE = /tmp/gcc.tar.bz2
 GCC_ARCHIVE      = /tmp/binutils.tar.bz2
 FREEMINT_ARCHIVE = /tmp/freemint.zip
@@ -9,7 +11,8 @@ EXT2_IMAGE       = drive_d.img
 EXT2_IMAGE_SIZE  = 512
 EMUTOS_DIR       = emutos
 
-default: $(FREEMINT_DIR) $(EXT2_IMAGE) $(EMUTOS_DIR)
+$(TARGET): $(FREEMINT_DIR) $(EXT2_IMAGE) $(EMUTOS_DIR) aranym.config
+	tar cjf "$@" $^
 
 $(FREEMINT_DIR): $(FREEMINT_ARCHIVE)
 	mkdir -p "$@"
@@ -46,6 +49,7 @@ clean:
 	rm -rf ${EXT2_DIR}
 	rm -rf ${EMUTOS_DIR}
 	rm -f ${EXT2_IMAGE}
+	rm -f ${TARGET}
 	rm -f *~
 
 distclean: clean
