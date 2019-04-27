@@ -4,6 +4,7 @@ BINUTILS_ARCHIVE = /tmp/gcc.tar.bz2
 GCC_ARCHIVE      = /tmp/binutils.tar.bz2
 FREEMINT_ARCHIVE = /tmp/freemint.zip
 EMUTOS_ARCHIVE   = /tmp/emutos.zip
+OPENSSL_ARCHIVE  = /tmp/openssl.tar.gz
 OPENSSH_ARCHIVE  = /tmp/openssh.tar.gz
 OPKG_ARCHIVE     = /tmp/opkg.tar.bz2
 
@@ -12,6 +13,7 @@ EXT2_DIR         = drive_d
 EXT2_IMAGE       = drive_d.img
 EXT2_IMAGE_SIZE  = 512
 EMUTOS_DIR       = emutos
+OPENSSL_DIR      = openssl
 OPENSSH_DIR      = openssh
 OPKG_DIR         = opkg
 
@@ -24,7 +26,7 @@ $(FREEMINT_DIR): $(FREEMINT_ARCHIVE)
 
 $(EXT2_IMAGE): $(EXT2_DIR)
 	genext2fs -b $$((${EXT2_IMAGE_SIZE} * 1024)) -d ${EXT2_DIR} "$@"
-	rm -rf ${EXT2_DIR}
+	#rm -rf ${EXT2_DIR}
 
 $(EXT2_DIR): $(BINUTILS_ARCHIVE) $(GCC_ARCHIVE) $(OPENSSH_DIR) $(OPKG_DIR)
 	mkdir -p "$@"
@@ -35,12 +37,20 @@ $(EMUTOS_DIR): $(EMUTOS_ARCHIVE)
 	unzip ${EMUTOS_ARCHIVE}
 	mv emutos-aranym-0.9.10 "$@"
 
-$(OPENSSH_DIR):
-	tar xzf ${OPENSSH_ARCHIVE}
+$(OPENSSL_DIR): $(OPENSSL_ARCHIVE)
+	tar xzf "$<"
+	mv openssl-1.0.2r "$@"
+	cd "$@" && \
+	./Configure -DB_ENDIAN no-shared no-threads --prefix=/usr gcc:m68k-atari-mint-gcc -O2 -fomit-frame-pointer -m68020-60 && \
+	make AR='m68k-atari-mint-ar cr' RANLIB='m68k-atari-mint-ranlib' LIBDIR='lib/m68020-60' && \
+	make INSTALL_PREFIX="${PWD}/${EXT2_DIR}" LIBDIR='lib/m68020-60' install
+
+$(OPENSSH_DIR): $(OPENSSH_ARCHIVE) $(OPENSSL_DIR)
+	tar xzf "$<"
 	mv openssh-8.0p1 "$@"
 
-$(OPKG_DIR):
-	tar xjf ${OPKG_ARCHIVE}
+$(OPKG_DIR): $(OPKG_ARCHIVE)
+	tar xjf "$<"
 	mv opkg-0.4.0 "$@"
 
 $(BINUTILS_ARCHIVE):
@@ -55,6 +65,9 @@ $(FREEMINT_ARCHIVE):
 $(EMUTOS_ARCHIVE):
 	wget -O "$@" http://downloads.sourceforge.net/project/emutos/emutos/0.9.10/emutos-aranym-0.9.10.zip
 
+$(OPENSSL_ARCHIVE):
+	wget -O "$@" https://www.openssl.org/source/openssl-1.0.2r.tar.gz
+
 $(OPENSSH_ARCHIVE):
 	wget -O "$@" https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-8.0p1.tar.gz
 
@@ -65,6 +78,7 @@ clean:
 	rm -rf ${FREEMINT_DIR}
 	rm -rf ${EXT2_DIR}
 	rm -rf ${EMUTOS_DIR}
+	rm -rf ${OPENSSL_DIR}
 	rm -rf ${OPENSSH_DIR}
 	rm -rf ${OPKG_DIR}
 	rm -f ${EXT2_IMAGE}
@@ -76,5 +90,6 @@ distclean: clean
 	rm -f ${GCC_ARCHIVE}
 	rm -f ${FREEMINT_ARCHIVE}
 	rm -f ${EMUTOS_ARCHIVE}
+	rm -f ${OPENSSL_ARCHIVE}
 	rm -f ${OPENSSH_ARCHIVE}
 	rm -f ${OPKG_ARCHIVE}

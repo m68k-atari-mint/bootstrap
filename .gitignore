@@ -4,5 +4,6 @@ drive_d/
 drive_d.img
 emutos/
 bootstrap.tar.bz2
+openssl/
 openssh/
 opkg/
