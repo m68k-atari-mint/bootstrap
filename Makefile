@@ -4,6 +4,7 @@ BINUTILS_ARCHIVE = /tmp/gcc.tar.bz2
 GCC_ARCHIVE      = /tmp/binutils.tar.bz2
 FREEMINT_ARCHIVE = /tmp/freemint.zip
 EMUTOS_ARCHIVE   = /tmp/emutos.zip
+ZLIB_ARCHIVE     = /tmp/zlib.tar.gz
 OPENSSL_ARCHIVE  = /tmp/openssl.tar.gz
 OPENSSH_ARCHIVE  = /tmp/openssh.tar.gz
 OPKG_ARCHIVE     = /tmp/opkg.tar.bz2
@@ -13,6 +14,7 @@ EXT2_DIR         = drive_d
 EXT2_IMAGE       = drive_d.img
 EXT2_IMAGE_SIZE  = 512
 EMUTOS_DIR       = emutos
+ZLIB_DIR         = zlib
 OPENSSL_DIR      = openssl
 OPENSSH_DIR      = openssh
 OPKG_DIR         = opkg
@@ -38,7 +40,16 @@ $(EMUTOS_DIR): $(EMUTOS_ARCHIVE)
 	mv emutos-aranym-0.9.10 "$@"
 
 # cross compiled (m68000 gcc assumed!)
-$(OPENSSL_DIR): $(OPENSSL_ARCHIVE)
+$(ZLIB_DIR): $(ZLIB_ARCHIVE)
+	tar xzf "$<"
+	mv zlib-1.2.11 "$@"
+	cd "$@" && \
+	CC='m68k-atari-mint-gcc' CFLAGS='-O2 -fomit-frame-pointer -m68020-60' AR='m68k-atari-mint-ar' RANLIB='m68k-atari-mint-ranlib' ./configure --prefix=/usr --static && \
+	make && \
+	make DESTDIR="${PWD}/${EXT2_DIR}" install
+
+# cross compiled (m68000 gcc assumed!)
+$(OPENSSL_DIR): $(OPENSSL_ARCHIVE) $(ZLIB_DIR)
 	tar xzf "$<"
 	mv openssl-1.0.2r "$@"
 	cd "$@" && \
@@ -66,6 +77,9 @@ $(FREEMINT_ARCHIVE):
 $(EMUTOS_ARCHIVE):
 	wget -O "$@" http://downloads.sourceforge.net/project/emutos/emutos/0.9.10/emutos-aranym-0.9.10.zip
 
+$(ZLIB_ARCHIVE):
+	wget -O "$@" https://www.zlib.net/zlib-1.2.11.tar.gz
+
 $(OPENSSL_ARCHIVE):
 	wget -O "$@" https://www.openssl.org/source/openssl-1.0.2r.tar.gz
 
@@ -79,6 +93,7 @@ clean:
 	rm -rf ${FREEMINT_DIR}
 	rm -rf ${EXT2_DIR}
 	rm -rf ${EMUTOS_DIR}
+	rm -rf ${ZLIB_DIR}
 	rm -rf ${OPENSSL_DIR}
 	rm -rf ${OPENSSH_DIR}
 	rm -rf ${OPKG_DIR}
@@ -91,6 +106,7 @@ distclean: clean
 	rm -f ${GCC_ARCHIVE}
 	rm -f ${FREEMINT_ARCHIVE}
 	rm -f ${EMUTOS_ARCHIVE}
+	rm -f ${ZLIB_ARCHIVE}
 	rm -f ${OPENSSL_ARCHIVE}
 	rm -f ${OPENSSH_ARCHIVE}
 	rm -f ${OPKG_ARCHIVE}
