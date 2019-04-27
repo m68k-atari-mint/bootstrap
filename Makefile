@@ -4,6 +4,8 @@ BINUTILS_ARCHIVE = /tmp/gcc.tar.bz2
 GCC_ARCHIVE      = /tmp/binutils.tar.bz2
 FREEMINT_ARCHIVE = /tmp/freemint.zip
 EMUTOS_ARCHIVE   = /tmp/emutos.zip
+MINTLIB_ARCHIVE  = /tmp/mintlib.tar.gz
+FDLIBM_ARCHIVE   = /tmp/fdlibm.tar.gz
 ZLIB_ARCHIVE     = /tmp/zlib.tar.gz
 OPENSSL_ARCHIVE  = /tmp/openssl.tar.gz
 OPENSSH_ARCHIVE  = /tmp/openssh.tar.gz
@@ -14,6 +16,8 @@ EXT2_DIR         = drive_d
 EXT2_IMAGE       = drive_d.img
 EXT2_IMAGE_SIZE  = 512
 EMUTOS_DIR       = emutos
+MINTLIB_DIR      = mintlib
+FDLIBM_DIR       = fdlibm
 ZLIB_DIR         = zlib
 OPENSSL_DIR      = openssl
 OPENSSH_DIR      = openssh
@@ -40,6 +44,24 @@ $(EMUTOS_DIR): $(EMUTOS_ARCHIVE)
 	mv emutos-aranym-0.9.10 "$@"
 
 # cross compiled (m68000 gcc assumed!)
+$(MINTLIB_DIR): $(MINTLIB_ARCHIVE)
+	tar xzf "$<"
+	mv mintlib-master "$@"
+	cd "$@" && \
+	make CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no && \
+	make CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="${PWD}/${EXT2_DIR}/usr" install
+
+# cross compiled (m68000 gcc assumed!)	
+$(FDLIBM_DIR): $(FDLIBM_ARCHIVE)
+	tar xzf "$<"
+	mv fdlibm-master "$@"
+	cd "$@" && \
+	./configure --host=m68k-atari-mint && \
+	make CPU-FPU-TYPES=68020-60.68881 && \
+	make CPU-FPU-TYPES=68020-60.68881 prefix="${PWD}/${EXT2_DIR}/usr" install
+	mv "${PWD}/${EXT2_DIR}/usr/lib/m68020-60"/* "${PWD}/${EXT2_DIR}/usr/lib" && rmdir "${PWD}/${EXT2_DIR}/usr/lib/m68020-60"
+
+# cross compiled (m68000 gcc assumed!)
 $(ZLIB_DIR): $(ZLIB_ARCHIVE)
 	tar xzf "$<"
 	mv zlib-1.2.11 "$@"
@@ -49,7 +71,7 @@ $(ZLIB_DIR): $(ZLIB_ARCHIVE)
 	make DESTDIR="${PWD}/${EXT2_DIR}" install
 
 # cross compiled (m68000 gcc assumed!)
-$(OPENSSL_DIR): $(OPENSSL_ARCHIVE) $(ZLIB_DIR)
+$(OPENSSL_DIR): $(OPENSSL_ARCHIVE) $(ZLIB_DIR) $(MINTLIB_DIR) $(FDLIBM_DIR)
 	tar xzf "$<"
 	mv openssl-1.0.2r "$@"
 	cd "$@" && \
@@ -77,6 +99,12 @@ $(FREEMINT_ARCHIVE):
 $(EMUTOS_ARCHIVE):
 	wget -O "$@" http://downloads.sourceforge.net/project/emutos/emutos/0.9.10/emutos-aranym-0.9.10.zip
 
+$(MINTLIB_ARCHIVE):
+	wget -O "$@" https://github.com/freemint/mintlib/archive/master.tar.gz
+
+$(FDLIBM_ARCHIVE):
+	wget -O "$@" https://github.com/freemint/fdlibm/archive/master.tar.gz
+
 $(ZLIB_ARCHIVE):
 	wget -O "$@" https://www.zlib.net/zlib-1.2.11.tar.gz
 
@@ -93,6 +121,8 @@ clean:
 	rm -rf ${FREEMINT_DIR}
 	rm -rf ${EXT2_DIR}
 	rm -rf ${EMUTOS_DIR}
+	rm -rf ${MINTLIB_DIR}
+	rm -rf ${FDLIBM_DIR}
 	rm -rf ${ZLIB_DIR}
 	rm -rf ${OPENSSL_DIR}
 	rm -rf ${OPENSSH_DIR}
@@ -106,6 +136,8 @@ distclean: clean
 	rm -f ${GCC_ARCHIVE}
 	rm -f ${FREEMINT_ARCHIVE}
 	rm -f ${EMUTOS_ARCHIVE}
+	rm -f ${MINTLIB_ARCHIVE}
+	rm -f ${FDLIBM_ARCHIVE}
 	rm -f ${ZLIB_ARCHIVE}
 	rm -f ${OPENSSL_ARCHIVE}
 	rm -f ${OPENSSH_ARCHIVE}
