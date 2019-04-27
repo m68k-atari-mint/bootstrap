@@ -37,13 +37,14 @@ $(EMUTOS_DIR): $(EMUTOS_ARCHIVE)
 	unzip ${EMUTOS_ARCHIVE}
 	mv emutos-aranym-0.9.10 "$@"
 
+# cross compiled (m68000 gcc assumed!)
 $(OPENSSL_DIR): $(OPENSSL_ARCHIVE)
 	tar xzf "$<"
 	mv openssl-1.0.2r "$@"
 	cd "$@" && \
 	./Configure -DB_ENDIAN no-shared no-threads --prefix=/usr gcc:m68k-atari-mint-gcc -O2 -fomit-frame-pointer -m68020-60 && \
-	make AR='m68k-atari-mint-ar cr' RANLIB='m68k-atari-mint-ranlib' LIBDIR='lib/m68020-60' && \
-	make INSTALL_PREFIX="${PWD}/${EXT2_DIR}" LIBDIR='lib/m68020-60' install
+	make AR='m68k-atari-mint-ar cr' RANLIB='m68k-atari-mint-ranlib' && \
+	make INSTALL_PREFIX="${PWD}/${EXT2_DIR}" install
 
 $(OPENSSH_DIR): $(OPENSSH_ARCHIVE) $(OPENSSL_DIR)
 	tar xzf "$<"
@@ -54,10 +55,10 @@ $(OPKG_DIR): $(OPKG_ARCHIVE)
 	mv opkg-0.4.0 "$@"
 
 $(BINUTILS_ARCHIVE):
-	wget -O "$@" https://github.com/freemint/m68k-atari-mint-binutils-gdb/releases/download/binutils-2_30-mint/binutils-2.30-m68000mint.tar.bz2
+	wget -O "$@" https://github.com/freemint/m68k-atari-mint-binutils-gdb/releases/download/binutils-2_30-mint/binutils-2.30-m68020-60mint.tar.bz2
 
 $(GCC_ARCHIVE):
-	wget -O "$@" https://github.com/freemint/m68k-atari-mint-gcc/releases/download/gcc-7_4_0-mint-20190228/gcc-7.4.0-m68000mint.tar.bz2
+	wget -O "$@" https://github.com/freemint/m68k-atari-mint-gcc/releases/download/gcc-7_4_0-mint-20190228/gcc-7.4.0-m68020-60mint.tar.bz2
 
 $(FREEMINT_ARCHIVE):
 	wget -O "$@" https://bintray.com/freemint/freemint/download_file?file_path=snapshots-cpu%2F1-19-8c0c3f2f%2Ffreemint-1-19-cur-040.zip
