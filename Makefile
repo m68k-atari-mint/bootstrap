@@ -75,7 +75,7 @@ $(OPENSSL_DIR): $(OPENSSL_ARCHIVE) $(ZLIB_DIR) $(MINTLIB_DIR) $(FDLIBM_DIR)
 	tar xzf "$<"
 	mv openssl-1.0.2r "$@"
 	cd "$@" && \
-	./Configure -DB_ENDIAN no-shared no-threads --prefix=/usr gcc:m68k-atari-mint-gcc -O2 -fomit-frame-pointer -m68020-60 && \
+	./Configure -DB_ENDIAN -L"${PWD}/${EXT2_DIR}/usr/lib" -I"${PWD}/${EXT2_DIR}/usr/include" no-shared no-threads --prefix=/usr gcc:m68k-atari-mint-gcc -O2 -fomit-frame-pointer -m68020-60 && \
 	make AR='m68k-atari-mint-ar cr' RANLIB='m68k-atari-mint-ranlib' && \
 	make INSTALL_PREFIX="${PWD}/${EXT2_DIR}" install
 
