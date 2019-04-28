@@ -9,6 +9,8 @@ FDLIBM_ARCHIVE   = /tmp/fdlibm.tar.gz
 ZLIB_ARCHIVE     = /tmp/zlib.tar.gz
 OPENSSL_ARCHIVE  = /tmp/openssl.tar.gz
 OPENSSH_ARCHIVE  = /tmp/openssh.tar.gz
+MAKE_ARCHIVE     = /tmp/make.tar.bz2
+COREUTILS_ARCHIVE = /tmp/coreutils.tar.bz2
 OPKG_ARCHIVE     = /tmp/opkg.tar.bz2
 
 FREEMINT_DIR     = drive_c
@@ -34,10 +36,12 @@ $(EXT2_IMAGE): $(EXT2_DIR)
 	genext2fs -b $$((${EXT2_IMAGE_SIZE} * 1024)) -d ${EXT2_DIR} "$@"
 	#rm -rf ${EXT2_DIR}
 
-$(EXT2_DIR): $(BINUTILS_ARCHIVE) $(GCC_ARCHIVE) $(OPENSSH_DIR) $(OPKG_DIR)
+$(EXT2_DIR): $(BINUTILS_ARCHIVE) $(GCC_ARCHIVE) $(OPENSSH_DIR) $(OPKG_DIR) $(MAKE_ARCHIVE) $(COREUTILS_ARCHIVE)
 	mkdir -p "$@"
 	tar xjf ${BINUTILS_ARCHIVE} -C "$@"
 	tar xjf ${GCC_ARCHIVE} -C "$@"
+	tar xjf ${MAKE_ARCHIVE} -C "$@"
+	tar xjf ${COREUTILS_ARCHIVE} -C "$@"
 
 $(EMUTOS_DIR): $(EMUTOS_ARCHIVE)
 	unzip ${EMUTOS_ARCHIVE}
@@ -76,12 +80,16 @@ $(OPENSSL_DIR): $(OPENSSL_ARCHIVE) $(ZLIB_DIR) $(MINTLIB_DIR) $(FDLIBM_DIR)
 	mv openssl-1.0.2r "$@"
 	cd "$@" && \
 	./Configure -DB_ENDIAN -DDEVRANDOM='"/dev/urandom","/dev/random"' -L"${PWD}/${EXT2_DIR}/usr/lib" -I"${PWD}/${EXT2_DIR}/usr/include" no-shared no-threads --prefix=/usr gcc:m68k-atari-mint-gcc -O2 -fomit-frame-pointer -m68020-60 && \
-	make AR='m68k-atari-mint-ar cr' RANLIB='m68k-atari-mint-ranlib' && \
-	make INSTALL_PREFIX="${PWD}/${EXT2_DIR}" install
+	make AR='m68k-atari-mint-ar crs' RANLIB='m68k-atari-mint-ranlib' && \
+	make INSTALL_PREFIX="${PWD}/${EXT2_DIR}" install && \
+	m68k-atari-mint-ranlib "${PWD}/${EXT2_DIR}/usr/lib/libcrypto.a"
 
-$(OPENSSH_DIR): $(OPENSSH_ARCHIVE) $(OPENSSL_DIR)
+$(OPENSSH_DIR): $(OPENSSH_ARCHIVE) $(OPENSSL_DIR) openssh.patch
 	tar xzf "$<"
 	mv openssh-8.0p1 "$@"
+	cd "$@" && \
+	cat ../openssh.patch | patch -p1 && \
+	mkdir -p "${PWD}/${EXT2_DIR}/root/.ssh" && cp "$HOME/.ssh/id_rsa.pub" "${PWD}/${EXT2_DIR}/root/.ssh"
 
 $(OPKG_DIR): $(OPKG_ARCHIVE)
 	tar xjf "$<"
@@ -114,6 +122,12 @@ $(OPENSSL_ARCHIVE):
 $(OPENSSH_ARCHIVE):
 	wget -O "$@" https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-8.0p1.tar.gz
 
+$(MAKE_ARCHIVE):
+	wget -O "$@" http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/make/make-4.0-bin-mint020-20131109.tar.bz2
+
+$(COREUTILS_ARCHIVE):
+	wget -O "$@" http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/coreutils/coreutils-8.21-mint-20131205-bin-mint020-20131219.tar.bz2
+
 $(OPKG_ARCHIVE):
 	wget -O "$@" http://git.yoctoproject.org/cgit/cgit.cgi/opkg/snapshot/opkg-0.4.0.tar.bz2
 
@@ -141,4 +155,6 @@ distclean: clean
 	rm -f ${ZLIB_ARCHIVE}
 	rm -f ${OPENSSL_ARCHIVE}
 	rm -f ${OPENSSH_ARCHIVE}
+	rm -f ${MAKE_ARCHIVE}
+	rm -f ${COREUTILS_ARCHIVE}
 	rm -f ${OPKG_ARCHIVE}

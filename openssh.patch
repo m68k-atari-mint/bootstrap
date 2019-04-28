@@ -1,0 +1,30 @@
+diff -ru openssh-8.0p1/openbsd-compat/bsd-statvfs.h openssh/openbsd-compat/bsd-statvfs.h
+--- openssh-8.0p1/openbsd-compat/bsd-statvfs.h	2019-04-18 00:52:57.000000000 +0200
++++ openssh/openbsd-compat/bsd-statvfs.h	2019-04-28 10:49:17.617454991 +0200
+@@ -29,6 +29,9 @@
+ #ifdef HAVE_SYS_VFS_H
+ #include <sys/vfs.h>
+ #endif
++#ifdef HAVE_SYS_STATVFS_H
++#include <sys/statvfs.h>
++#endif
+ 
+ #ifndef HAVE_FSBLKCNT_T
+ typedef unsigned long fsblkcnt_t;
+@@ -44,6 +47,7 @@
+ #define ST_NOSUID	2
+ #endif
+ 
++#ifndef HAVE_SYS_STATVFS_H
+ 	/* as defined in IEEE Std 1003.1, 2004 Edition */
+ struct statvfs {
+ 	unsigned long f_bsize;	/* File system block size. */
+@@ -63,6 +67,8 @@
+ };
+ #endif
+ 
++#endif
++
+ #ifndef HAVE_STATVFS
+ int statvfs(const char *, struct statvfs *);
+ #endif
