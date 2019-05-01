@@ -140,7 +140,7 @@
 # (in kilobytes). The default is 1024. Better keep it low (1024 is
 # what we call low) if your machine has 4 MB RAM or less.
 
-#TPA_INITIALMEM=4096
+TPA_INITIALMEM=4096
 
 # FS_NEWFATFS= enables the new FAT filesystem driver for selected FAT
 # filesystems. The old TOS FS will be used otherwise.
@@ -267,18 +267,18 @@
 #
 # WARNING: directories listed in the left column must really exist!
 
-#sln e:/bin      u:/bin
-#sln e:/boot     u:/boot
-#sln e:/etc      u:/etc
-#sln e:/home     u:/home
-#sln e:/lib      u:/lib
-#sln e:/mnt      u:/mnt
-#sln e:/opt      u:/opt
-#sln e:/root     u:/root
-#sln e:/sbin     u:/sbin
-#sln e:/tmp      u:/tmp
-#sln e:/usr      u:/usr
-#sln e:/var      u:/var
+sln d:/bin      u:/bin
+sln d:/boot     u:/boot
+sln d:/etc      u:/etc
+sln d:/home     u:/home
+sln d:/lib      u:/lib
+sln d:/mnt      u:/mnt
+sln d:/opt      u:/opt
+sln d:/root     u:/root
+sln d:/sbin     u:/sbin
+sln d:/tmp      u:/tmp
+sln d:/usr      u:/usr
+sln d:/var      u:/var
 
 # Some people want also to do this:
 
@@ -365,10 +365,10 @@ setenv TMPDIR u:/tmp
 # UNIX style login. If you're using plain MultiTOS and want to
 # run UNIX shells under TOSWIN, please uncomment it.
 
-#setenv LOGNAME root
-#setenv USER    root
-#setenv HOME    /root
-#setenv SHELL   /bin/bash
+setenv LOGNAME root
+setenv USER    root
+setenv HOME    /root
+setenv SHELL   /bin/bash
 
 # These lines (with proper pathnames) are obligatory, if you're
 # going to use N.AES and Thing Desktop, respectively.
@@ -396,7 +396,7 @@ setenv TMPDIR u:/tmp
 # Otherwise, if your init program is not GEM, you should use INIT= as
 # follows:
 
-#INIT=u:/c/mint/init.prg
+INIT=/bin/bash
 
 # If you leave both commands above commented out, the MiNT will
 # attempt to execute a file called `sh.tos' found in the system
