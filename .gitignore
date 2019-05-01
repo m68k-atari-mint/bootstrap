@@ -12,5 +12,7 @@ bash/
 openssh/
 binutils/
 gcc/
+mintlib-src/
 mintlib/
 fdlibm/
+fdlibm-src/

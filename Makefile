@@ -9,13 +9,16 @@ TARGET_IMAGE_SIZE = 256
 
 CONFIG_DIR	= config
 DOWNLOADS_DIR	= downloads
-SCRIPTS_DIR	= scripts
+TOOLS_DIR	= tools
 PATCHES_DIR	= patches
 
 ###############################################################################
 
 default: emutos/.done freemint/.done $(HOST_IMAGE) aranym.config
 	cp $(CONFIG_DIR)/mint.cnf freemint/mint/1-19-cur
+	mkdir -p freemint/mint/bin
+	cp $(TOOLS_DIR)/eth0-config.sh freemint/mint/bin
+	cp $(TOOLS_DIR)/nfeth-config freemint/mint/bin
 	aranym-mmu -c aranym.config
 
 aranym.config:
@@ -23,10 +26,12 @@ aranym.config:
 	cp $(CONFIG_DIR)/aranym.config .
 
 $(HOST_IMAGE): $(HOST_DRIVE)/.done
-	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) $@
+	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) --squash $@
 
 $(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.done fdlibm/.done
 	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
+
+	cp -ra $(CONFIG_DIR)/{etc,var} $(HOST_DRIVE)
 
 	cp -ra bash/* $(HOST_DRIVE)
 	cp -ra openssh/* $(HOST_DRIVE)
@@ -35,6 +40,10 @@ $(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.
 	cp -ra mintlib/* $(HOST_DRIVE)
 	cp -ra fdlibm/* $(HOST_DRIVE)
 
+	# host's ssh-keygen is for some reason rejected ...
+	#ssh-keygen -t rsa -N "" -f $(HOST_DRIVE)/etc/ssh/ssh_host_rsa_key
+	#ssh-keygen -t dsa -N "" -f $(HOST_DRIVE)/etc/ssh/ssh_host_dsa_key
+	#ssh-keygen -t ecdsa -N "" -f $(HOST_DRIVE)/etc/ssh/ssh_host_ecdsa_key
 	mkdir -p $(HOST_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(HOST_DRIVE)/root/.ssh/authorized_keys
 
 	touch $@

@@ -282,17 +282,17 @@ sln d:/var      u:/var
 
 # Some people want also to do this:
 
-#sln u:/pipe/pty.A u:/dev/pty.A 
-#sln u:/pipe/pty.B u:/dev/pty.B 
-#sln u:/pipe/pty.C u:/dev/pty.C 
-#sln u:/pipe/pty.D u:/dev/pty.D 
-#sln u:/pipe/pty.E u:/dev/pty.E 
-#sln u:/pipe/pty.F u:/dev/pty.F 
-#sln u:/pipe/pty.G u:/dev/pty.G 
-#sln u:/pipe/pty.H u:/dev/pty.H 
-#sln u:/pipe/pty.I u:/dev/pty.I 
-#sln u:/pipe/pty.J u:/dev/pty.J 
-#sln u:/pipe/pty.K u:/dev/pty.K 
+#sln u:/pipe/pty.A u:/dev/pty.A
+#sln u:/pipe/pty.B u:/dev/pty.B
+#sln u:/pipe/pty.C u:/dev/pty.C
+#sln u:/pipe/pty.D u:/dev/pty.D
+#sln u:/pipe/pty.E u:/dev/pty.E
+#sln u:/pipe/pty.F u:/dev/pty.F
+#sln u:/pipe/pty.G u:/dev/pty.G
+#sln u:/pipe/pty.H u:/dev/pty.H
+#sln u:/pipe/pty.I u:/dev/pty.I
+#sln u:/pipe/pty.J u:/dev/pty.J
+#sln u:/pipe/pty.K u:/dev/pty.K
 
 # PCONVERT and UNIXMODE variables control some internals of
 # MiNT Library.
@@ -307,7 +307,7 @@ sln d:/var      u:/var
 #
 # Default on 1.16.0 is c:/, on 1.16.1 this is the sysdir.
 
-setenv PATH /sbin;/bin;/usr/sbin;/usr/bin
+setenv PATH /sbin;/bin;/usr/sbin;/usr/bin;/c/mint/1-19-cur/sys-root/bin
 
 # Default path to search the SLBs (MagiC style 'shared libraries
 # Default - on 1.16.0 - is the system directory (so called sysdir).
@@ -361,6 +361,10 @@ setenv TMPDIR u:/tmp
 #exec u:/c/mint/gluestik.prg
 #echo
 
+# Start nfeth
+exec /bin/bash u:/c/mint/bin/eth0-config.sh
+echo
+
 # Default login variables. Leave them commented out, if you use
 # UNIX style login. If you're using plain MultiTOS and want to
 # run UNIX shells under TOSWIN, please uncomment it.
@@ -396,6 +400,7 @@ setenv SHELL   /bin/bash
 # Otherwise, if your init program is not GEM, you should use INIT= as
 # follows:
 
+#INIT=/usr/sbin/sshd
 INIT=/bin/bash
 
 # If you leave both commands above commented out, the MiNT will

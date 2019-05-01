@@ -1,0 +1,3 @@
+PS1='[\[\e[31m\]\u\[\e[m\]@\[\e[32m\]\h\[\e[m\] \W]\$ '
+export PS1
+alias ls='ls --color'
