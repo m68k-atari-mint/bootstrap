@@ -1,160 +1,79 @@
-TARGET           = bootstrap.tar.bz2
+HOST_DRIVE	= drive_d
+TARGET_DRIVE	= drive_e
 
-BINUTILS_ARCHIVE = /tmp/gcc.tar.bz2
-GCC_ARCHIVE      = /tmp/binutils.tar.bz2
-FREEMINT_ARCHIVE = /tmp/freemint.zip
-EMUTOS_ARCHIVE   = /tmp/emutos.zip
-MINTLIB_ARCHIVE  = /tmp/mintlib.tar.gz
-FDLIBM_ARCHIVE   = /tmp/fdlibm.tar.gz
-ZLIB_ARCHIVE     = /tmp/zlib.tar.gz
-OPENSSL_ARCHIVE  = /tmp/openssl.tar.gz
-OPENSSH_ARCHIVE  = /tmp/openssh.tar.gz
-MAKE_ARCHIVE     = /tmp/make.tar.bz2
-COREUTILS_ARCHIVE = /tmp/coreutils.tar.bz2
-OPKG_ARCHIVE     = /tmp/opkg.tar.bz2
+CONFIG_DIR	= config
+DOWNLOADS_DIR	= downloads
 
-FREEMINT_DIR     = drive_c
-EXT2_DIR         = drive_d
-EXT2_IMAGE       = drive_d.img
-EXT2_IMAGE_SIZE  = 512
-EMUTOS_DIR       = emutos
-MINTLIB_DIR      = mintlib
-FDLIBM_DIR       = fdlibm
-ZLIB_DIR         = zlib
-OPENSSL_DIR      = openssl
-OPENSSH_DIR      = openssh
-OPKG_DIR         = opkg
+###############################################################################
 
-$(TARGET): $(FREEMINT_DIR) $(EXT2_IMAGE) $(EMUTOS_DIR) aranym.config
-	#tar cjf "$@" $^
+default: $(HOST_DRIVE)/.done
 
-$(FREEMINT_DIR): $(FREEMINT_ARCHIVE)
-	mkdir -p "$@"
-	cd "$@" && unzip ${FREEMINT_ARCHIVE} && cd -
+$(HOST_DRIVE)/.done: emutos/.done freemint/.done bash/.done binutils/.done gcc/.done
+	mkdir -p $(HOST_DRIVE)
+	touch $@
 
-$(EXT2_IMAGE): $(EXT2_DIR)
-	genext2fs -b $$((${EXT2_IMAGE_SIZE} * 1024)) -d ${EXT2_DIR} "$@"
-	#rm -rf ${EXT2_DIR}
+$(TARGET_DRIVE)/.done:
+	mkdir -p $(TARGET_DRIVE)
+	touch $@
 
-$(EXT2_DIR): $(BINUTILS_ARCHIVE) $(GCC_ARCHIVE) $(OPENSSH_DIR) $(OPKG_DIR) $(MAKE_ARCHIVE) $(COREUTILS_ARCHIVE)
-	mkdir -p "$@"
-	tar xjf ${BINUTILS_ARCHIVE} -C "$@"
-	tar xjf ${GCC_ARCHIVE} -C "$@"
-	tar xjf ${MAKE_ARCHIVE} -C "$@"
-	tar xjf ${COREUTILS_ARCHIVE} -C "$@"
+###############################################################################
 
-$(EMUTOS_DIR): $(EMUTOS_ARCHIVE)
-	unzip ${EMUTOS_ARCHIVE}
-	mv emutos-aranym-0.9.10 "$@"
+emutos/.done: $(DOWNLOADS_DIR)/emutos.zip
+	unzip -q $<
+	mv emutos-aranym-* "emutos"
+	touch $@
 
-# cross compiled (m68000 gcc assumed!)
-$(MINTLIB_DIR): $(MINTLIB_ARCHIVE)
-	tar xzf "$<"
-	mv mintlib-master "$@"
-	cd "$@" && \
-	make CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no && \
-	make CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="${PWD}/${EXT2_DIR}/usr" install
+freemint/.done: $(DOWNLOADS_DIR)/freemint.zip
+	unzip -q $< -d "freemint"
+	touch $@
 
-# cross compiled (m68000 gcc assumed!)	
-$(FDLIBM_DIR): $(FDLIBM_ARCHIVE)
-	tar xzf "$<"
-	mv fdlibm-master "$@"
-	cd "$@" && \
-	./configure --host=m68k-atari-mint && \
-	make CPU-FPU-TYPES=68020-60.68881 && \
-	make CPU-FPU-TYPES=68020-60.68881 prefix="${PWD}/${EXT2_DIR}/usr" install
-	mv "${PWD}/${EXT2_DIR}/usr/lib/m68020-60"/* "${PWD}/${EXT2_DIR}/usr/lib" && rmdir "${PWD}/${EXT2_DIR}/usr/lib/m68020-60"
+bash/.done: $(DOWNLOADS_DIR)/bash.tar.bz2
+	mkdir "bash" && tar xjf $< -C "bash"
+	touch $@
 
-# cross compiled (m68000 gcc assumed!)
-$(ZLIB_DIR): $(ZLIB_ARCHIVE)
-	tar xzf "$<"
-	mv zlib-1.2.11 "$@"
-	cd "$@" && \
-	CC='m68k-atari-mint-gcc' CFLAGS='-O2 -fomit-frame-pointer -m68020-60' AR='m68k-atari-mint-ar' RANLIB='m68k-atari-mint-ranlib' ./configure --prefix=/usr --static && \
-	make && \
-	make DESTDIR="${PWD}/${EXT2_DIR}" install
+openssh/.done: $(DOWNLOADS_DIR)/openssh.tar.bz2
+	mkdir "openssh" && tar xjf $< -C "openssh"
+	touch $@
 
-# cross compiled (m68000 gcc assumed!)
-$(OPENSSL_DIR): $(OPENSSL_ARCHIVE) $(ZLIB_DIR) $(MINTLIB_DIR) $(FDLIBM_DIR)
-	tar xzf "$<"
-	mv openssl-1.0.2r "$@"
-	cd "$@" && \
-	./Configure -DB_ENDIAN -DDEVRANDOM='"/dev/urandom","/dev/random"' -L"${PWD}/${EXT2_DIR}/usr/lib" -I"${PWD}/${EXT2_DIR}/usr/include" no-shared no-threads --prefix=/usr gcc:m68k-atari-mint-gcc -O2 -fomit-frame-pointer -m68020-60 && \
-	make AR='m68k-atari-mint-ar crs' RANLIB='m68k-atari-mint-ranlib' && \
-	make INSTALL_PREFIX="${PWD}/${EXT2_DIR}" install && \
-	m68k-atari-mint-ranlib "${PWD}/${EXT2_DIR}/usr/lib/libcrypto.a"
+binutils/.done: $(DOWNLOADS_DIR)/binutils.tar.bz2
+	mkdir "binutils" && tar xjf $< -C "binutils"
+	touch $@
 
-$(OPENSSH_DIR): $(OPENSSH_ARCHIVE) $(OPENSSL_DIR) openssh.patch
-	tar xzf "$<"
-	mv openssh-8.0p1 "$@"
-	cd "$@" && \
-	cat ../openssh.patch | patch -p1 && \
-	mkdir -p "${PWD}/${EXT2_DIR}/root/.ssh" && cp "$HOME/.ssh/id_rsa.pub" "${PWD}/${EXT2_DIR}/root/.ssh"
+gcc/.done: $(DOWNLOADS_DIR)/gcc.tar.bz2
+	mkdir "gcc" && tar xjf $< -C "gcc"
+	touch $@
 
-$(OPKG_DIR): $(OPKG_ARCHIVE)
-	tar xjf "$<"
-	mv opkg-0.4.0 "$@"
+###############################################################################
 
-$(BINUTILS_ARCHIVE):
-	wget -O "$@" https://github.com/freemint/m68k-atari-mint-binutils-gdb/releases/download/binutils-2_30-mint/binutils-2.30-m68020-60mint.tar.bz2
+$(DOWNLOADS_DIR)/emutos.zip:
+	mkdir -p $(DOWNLOADS_DIR)
+	wget -q -O $@ "http://downloads.sourceforge.net/project/emutos/emutos/0.9.10/emutos-aranym-0.9.10.zip"
 
-$(GCC_ARCHIVE):
-	wget -O "$@" https://github.com/freemint/m68k-atari-mint-gcc/releases/download/gcc-7_4_0-mint-20190228/gcc-7.4.0-m68020-60mint.tar.bz2
+$(DOWNLOADS_DIR)/freemint.zip:
+	mkdir -p $(DOWNLOADS_DIR)
+	wget -q -O $@ "https://bintray.com/freemint/freemint/download_file?file_path=snapshots-cpu%2F1-19-a3af9bdb%2Ffreemint-1-19-cur-040.zip"
 
-$(FREEMINT_ARCHIVE):
-	wget -O "$@" https://bintray.com/freemint/freemint/download_file?file_path=snapshots-cpu%2F1-19-8c0c3f2f%2Ffreemint-1-19-cur-040.zip
+$(DOWNLOADS_DIR)/bash.tar.bz2:
+	mkdir -p $(DOWNLOADS_DIR)
+	wget -q -O $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/bash/bash-4.4.12-bin-mint020-20170617.tar.bz2"
 
-$(EMUTOS_ARCHIVE):
-	wget -O "$@" http://downloads.sourceforge.net/project/emutos/emutos/0.9.10/emutos-aranym-0.9.10.zip
+$(DOWNLOADS_DIR)/openssh.tar.bz2:
+	mkdir -p $(DOWNLOADS_DIR)
+	wget -q -O $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/openssh/openssh-6.4p1-bin-mint020-20131219.tar.bz2"
 
-$(MINTLIB_ARCHIVE):
-	wget -O "$@" https://github.com/freemint/mintlib/archive/master.tar.gz
+$(DOWNLOADS_DIR)/binutils.tar.bz2:
+	mkdir -p $(DOWNLOADS_DIR)
+	wget -q -O $@ "https://github.com/freemint/m68k-atari-mint-binutils-gdb/releases/download/binutils-2_30-mint/binutils-2.30-m68020-60mint.tar.bz2"
 
-$(FDLIBM_ARCHIVE):
-	wget -O "$@" https://github.com/freemint/fdlibm/archive/master.tar.gz
+$(DOWNLOADS_DIR)/gcc.tar.bz2:
+	mkdir -p $(DOWNLOADS_DIR)
+	wget -q -O $@ "https://github.com/freemint/m68k-atari-mint-gcc/releases/download/gcc-7_4_0-mint-20190228/gcc-7.4.0-m68020-60mint.tar.bz2"
 
-$(ZLIB_ARCHIVE):
-	wget -O "$@" https://www.zlib.net/zlib-1.2.11.tar.gz
-
-$(OPENSSL_ARCHIVE):
-	wget -O "$@" https://www.openssl.org/source/openssl-1.0.2r.tar.gz
-
-$(OPENSSH_ARCHIVE):
-	wget -O "$@" https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-8.0p1.tar.gz
-
-$(MAKE_ARCHIVE):
-	wget -O "$@" http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/make/make-4.0-bin-mint020-20131109.tar.bz2
-
-$(COREUTILS_ARCHIVE):
-	wget -O "$@" http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/coreutils/coreutils-8.21-mint-20131205-bin-mint020-20131219.tar.bz2
-
-$(OPKG_ARCHIVE):
-	wget -O "$@" http://git.yoctoproject.org/cgit/cgit.cgi/opkg/snapshot/opkg-0.4.0.tar.bz2
+###############################################################################
 
 clean:
-	rm -rf ${FREEMINT_DIR}
-	rm -rf ${EXT2_DIR}
-	rm -rf ${EMUTOS_DIR}
-	rm -rf ${MINTLIB_DIR}
-	rm -rf ${FDLIBM_DIR}
-	rm -rf ${ZLIB_DIR}
-	rm -rf ${OPENSSL_DIR}
-	rm -rf ${OPENSSH_DIR}
-	rm -rf ${OPKG_DIR}
-	rm -f ${EXT2_IMAGE}
-	rm -f ${TARGET}
-	rm -f *~
+	rm -rf $(HOST_DRIVE) $(TARGET_DRIVE)
+	rm -rf emutos freemint bash openssh binutils gcc
 
 distclean: clean
-	rm -f ${BINUTILS_ARCHIVE}
-	rm -f ${GCC_ARCHIVE}
-	rm -f ${FREEMINT_ARCHIVE}
-	rm -f ${EMUTOS_ARCHIVE}
-	rm -f ${MINTLIB_ARCHIVE}
-	rm -f ${FDLIBM_ARCHIVE}
-	rm -f ${ZLIB_ARCHIVE}
-	rm -f ${OPENSSL_ARCHIVE}
-	rm -f ${OPENSSH_ARCHIVE}
-	rm -f ${MAKE_ARCHIVE}
-	rm -f ${COREUTILS_ARCHIVE}
-	rm -f ${OPKG_ARCHIVE}
+	rm -rf $(DOWNLOADS_DIR)

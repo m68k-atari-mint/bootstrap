@@ -1,6 +1,10 @@
 Bootstrap plan:
 - need to create an image which is able to build packages and eventually, opkg
+- install to the host drive:
+	- emutos
+	- freemint
 - install to the cross image:
+	- bash
 	- awk
 	- binutils
 	- coreutils
@@ -10,7 +14,7 @@ Bootstrap plan:
 	- perl 5.6 (for native openssh)
 	- sed
 	- (maybe others, depending on 'make check' requirements of building packages)
-- use a cross-compiler to build and install to the cross image:
+- use a cross-compiler to build and install to both the cross and native image:
 	- mintlib (also create an .ipk)
 	- fdlibm (also create an .ipk)
 - ssh to the cross image, build and install to the native image (also create an .ipk for each of them):
@@ -20,6 +24,7 @@ Bootstrap plan:
 	- grep
 	- sed
 	- perl (perhaps build the one from sparemint?)
+	- bash
 - (later...):
 	- zlib
 	- bzip2
