@@ -2,13 +2,19 @@ HOST_DRIVE	= drive_d
 TARGET_DRIVE	= drive_e
 
 CONFIG_DIR	= config
+SCRIPTS_DIR	= scripts
 DOWNLOADS_DIR	= downloads
 
 ###############################################################################
 
-default: $(HOST_DRIVE)/.done
+default: emutos/.done freemint/.done $(HOST_DRIVE)/.done aranym.config
+	aranym-mmu -c aranym.config
 
-$(HOST_DRIVE)/.done: emutos/.done freemint/.done bash/.done binutils/.done gcc/.done
+aranym.config:
+	# unfortunately, ARAnyM can't have config in a subfolder
+	cp $(CONFIG_DIR)/aranym.config .
+
+$(HOST_DRIVE)/.done: bash/.done binutils/.done gcc/.done
 	mkdir -p $(HOST_DRIVE)
 	touch $@
 
@@ -26,6 +32,8 @@ emutos/.done: $(DOWNLOADS_DIR)/emutos.zip
 freemint/.done: $(DOWNLOADS_DIR)/freemint.zip
 	unzip -q $< -d "freemint"
 	touch $@
+
+###############################################################################
 
 bash/.done: $(DOWNLOADS_DIR)/bash.tar.bz2
 	mkdir "bash" && tar xjf $< -C "bash"
@@ -72,6 +80,7 @@ $(DOWNLOADS_DIR)/gcc.tar.bz2:
 ###############################################################################
 
 clean:
+	rm -f aranym.config
 	rm -rf $(HOST_DRIVE) $(TARGET_DRIVE)
 	rm -rf emutos freemint bash openssh binutils gcc
 
