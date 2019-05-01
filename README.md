@@ -4,8 +4,8 @@ Bootstrap plan:
 	- emutos
 	- freemint
 - install to the cross image:
-	- bash
 	- awk
+	- bash
 	- binutils
 	- coreutils
 	- gcc
@@ -18,11 +18,11 @@ Bootstrap plan:
 	- mintlib (also create an .ipk)
 	- fdlibm (also create an .ipk)
 - ssh to the cross image, build and install to the native image (also create an .ipk for each of them):
+	- sed
 	- make
 	- awk
 	- coreutils
 	- grep
-	- sed
 	- perl (perhaps build the one from sparemint?)
 	- bash
 - (later...):

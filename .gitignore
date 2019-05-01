@@ -16,3 +16,5 @@ mintlib-src/
 mintlib/
 fdlibm/
 fdlibm-src/
+coreutils/
+sed/

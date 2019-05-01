@@ -28,7 +28,7 @@ aranym.config:
 $(HOST_IMAGE): $(HOST_DRIVE)/.done
 	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) --squash $@
 
-$(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.done fdlibm/.done
+$(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done
 	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
 
 	cp -ra $(CONFIG_DIR)/{etc,var} $(HOST_DRIVE)
@@ -39,6 +39,8 @@ $(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.
 	cp -ra gcc/* $(HOST_DRIVE)
 	cp -ra mintlib/* $(HOST_DRIVE)
 	cp -ra fdlibm/* $(HOST_DRIVE)
+	cp -ra coreutils/* $(HOST_DRIVE)
+	cp -ra sed/* $(HOST_DRIVE)
 
 	# host's ssh-keygen is for some reason rejected ...
 	#ssh-keygen -t rsa -N "" -f $(HOST_DRIVE)/etc/ssh/ssh_host_rsa_key
@@ -108,6 +110,14 @@ fdlibm-src/.done: $(DOWNLOADS_DIR)/fdlibm.tar.gz
 	mv fdlibm-master "fdlibm-src"
 	touch $@
 
+coreutils/.done: $(DOWNLOADS_DIR)/coreutils.tar.bz2
+	mkdir "coreutils" && tar xjf $< -C "coreutils"
+	touch $@
+
+sed/.done: $(DOWNLOADS_DIR)/sed.tar.bz2
+	mkdir "sed" && tar xjf $< -C "sed"
+	touch $@
+
 ###############################################################################
 
 $(DOWNLOADS_DIR)/emutos.zip:
@@ -142,7 +152,18 @@ $(DOWNLOADS_DIR)/fdlibm.tar.gz:
 	mkdir -p $(DOWNLOADS_DIR)
 	wget -q -O $@ "https://github.com/freemint/fdlibm/archive/master.tar.gz"
 
+$(DOWNLOADS_DIR)/coreutils.tar.bz2:
+	mkdir -p $(DOWNLOADS_DIR)
+	wget -q -O $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/coreutils/coreutils-8.21-mint-20131205-bin-mint020-20131219.tar.bz2"
+
+$(DOWNLOADS_DIR)/sed.tar.bz2:
+	mkdir -p $(DOWNLOADS_DIR)
+	wget -q -O $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/sed/sed-4.2.2-bin-mint020-20131119.tar.bz2"
+
 ###############################################################################
+
+driveclean:
+	rm -f $(HOST_IMAGE) $(TARGET_IMAGE)
 
 clean:
 	rm -f aranym.config
@@ -150,6 +171,7 @@ clean:
 	rm -rf $(HOST_DRIVE) $(TARGET_DRIVE)
 	rm -rf emutos freemint bash openssh binutils gcc
 	rm -rf mintlib-src mintlib fdlibm-src fdlibm
+	rm -rf coreutils sed
 
 distclean: clean
 	rm -rf $(DOWNLOADS_DIR)
