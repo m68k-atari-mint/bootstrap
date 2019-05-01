@@ -1,25 +1,46 @@
 HOST_DRIVE	= drive_d
 TARGET_DRIVE	= drive_e
 
+HOST_IMAGE	= $(HOST_DRIVE).img
+HOST_IMAGE_SIZE	= 256
+
 CONFIG_DIR	= config
-SCRIPTS_DIR	= scripts
 DOWNLOADS_DIR	= downloads
+SCRIPTS_DIR	= scripts
+PATCHES_DIR	= patches
 
 ###############################################################################
 
-default: emutos/.done freemint/.done $(HOST_DRIVE)/.done aranym.config
+default: emutos/.done freemint/.done $(HOST_IMAGE) aranym.config
+	cp $(CONFIG_DIR)/mint.cnf freemint/mint/1-19-cur
 	aranym-mmu -c aranym.config
 
 aranym.config:
 	# unfortunately, ARAnyM can't have config in a subfolder
 	cp $(CONFIG_DIR)/aranym.config .
 
-$(HOST_DRIVE)/.done: bash/.done binutils/.done gcc/.done
+$(HOST_IMAGE): $(HOST_DRIVE)/.done
+	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) $@
+
+$(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.done fdlibm/.done
 	mkdir -p $(HOST_DRIVE)
+
+	cp -ra bash/* $(HOST_DRIVE)
+	cp -ra openssh/* $(HOST_DRIVE)
+	cp -ra binutils/* $(HOST_DRIVE)
+	cp -ra gcc/* $(HOST_DRIVE)
+	#cp -ra mintlib/* $(HOST_DRIVE)
+	#cp -ra fdlibm/* $(HOST_DRIVE)
+
+	mkdir -p $(HOST_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(HOST_DRIVE)/root/.ssh/authorized_keys
+
 	touch $@
 
 $(TARGET_DRIVE)/.done:
 	mkdir -p $(TARGET_DRIVE)
+
+	mkdir -p $(TARGET_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(TARGET_DRIVE)/root/.ssh/authorized_keys
+
 	touch $@
 
 ###############################################################################
@@ -51,6 +72,16 @@ gcc/.done: $(DOWNLOADS_DIR)/gcc.tar.bz2
 	mkdir "gcc" && tar xjf $< -C "gcc"
 	touch $@
 
+mintlib/.done: $(DOWNLOADS_DIR)/mintlib.tar.gz
+	tar xzf $<
+	mv mintlib-master "mintlib"
+	touch $@
+
+fdlibm/.done: $(DOWNLOADS_DIR)/fdlibm.tar.gz
+	tar xzf $<
+	mv fdlibm-master "fdlibm"
+	touch $@
+
 ###############################################################################
 
 $(DOWNLOADS_DIR)/emutos.zip:
@@ -77,12 +108,21 @@ $(DOWNLOADS_DIR)/gcc.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
 	wget -q -O $@ "https://github.com/freemint/m68k-atari-mint-gcc/releases/download/gcc-7_4_0-mint-20190228/gcc-7.4.0-m68020-60mint.tar.bz2"
 
+$(DOWNLOADS_DIR)/mintlib.tar.gz:
+	mkdir -p $(DOWNLOADS_DIR)
+	wget -q -O $@ "https://github.com/freemint/mintlib/archive/master.tar.gz"
+
+$(DOWNLOADS_DIR)/fdlibm.tar.gz:
+	mkdir -p $(DOWNLOADS_DIR)
+	wget -q -O $@ "https://github.com/freemint/fdlibm/archive/master.tar.gz"
+
 ###############################################################################
 
 clean:
 	rm -f aranym.config
+	rm -f $(HOST_IMAGE) $(TARGET_IMAGE)
 	rm -rf $(HOST_DRIVE) $(TARGET_DRIVE)
-	rm -rf emutos freemint bash openssh binutils gcc
+	rm -rf emutos freemint bash openssh binutils gcc mintlib fdlibm
 
 distclean: clean
 	rm -rf $(DOWNLOADS_DIR)

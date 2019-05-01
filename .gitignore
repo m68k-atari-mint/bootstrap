@@ -12,3 +12,5 @@ bash/
 openssh/
 binutils/
 gcc/
+mintlib/
+fdlibm/
