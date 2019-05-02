@@ -5,7 +5,7 @@ HOST_IMAGE	= $(HOST_DRIVE).img
 HOST_IMAGE_SIZE	= 256
 
 TARGET_IMAGE	= $(TARGET_DRIVE).img
-TARGET_IMAGE_SIZE = 256
+TARGET_IMAGE_SIZE = 512
 
 CONFIG_DIR	= config
 DOWNLOADS_DIR	= downloads
@@ -14,7 +14,7 @@ PATCHES_DIR	= patches
 
 ###############################################################################
 
-default: emutos/.done freemint/.done $(HOST_IMAGE) aranym.config
+default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config
 	cp $(CONFIG_DIR)/mint.cnf freemint/mint/1-19-cur
 	mkdir -p freemint/mint/bin
 	cp $(TOOLS_DIR)/eth0-config.sh freemint/mint/bin
@@ -50,8 +50,21 @@ $(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.
 
 	touch $@
 
-$(TARGET_DRIVE)/.done:
+$(TARGET_IMAGE): $(TARGET_DRIVE)/.done
+	# unfortunately, we can't directly copy files to this image as with host drive
+	# because genext2fs-produced images behave strangely when writing to them
+	# so wait until aranym+sshd is running and copy the files then
+	dd if=/dev/zero of=$@ bs=1M count=$(TARGET_IMAGE_SIZE)
+	mkfs.ext2 $@
+
+$(TARGET_DRIVE)/.done: binutils/.done gcc/.done mintlib/.done fdlibm/.done
 	mkdir -p $(TARGET_DRIVE)
+
+	# cheat a little :)
+	cp -ra binutils/* $(TARGET_DRIVE)
+	cp -ra gcc/* $(TARGET_DRIVE)
+	cp -ra mintlib/* $(TARGET_DRIVE)
+	cp -ra fdlibm/* $(TARGET_DRIVE)
 
 	mkdir -p $(TARGET_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(TARGET_DRIVE)/root/.ssh/authorized_keys
 
@@ -92,7 +105,7 @@ mintlib/.done: mintlib-src/.done
 	make CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="/usr" install DESTDIR=$(PWD)/mintlib
 	touch $@
 
-mintlib-src/.done: $(DOWNLOADS_DIR)/mintlib.tar.gz
+mintlib-src/.done: $(DOWNLOADS_DIR)/mintlib-src.tar.gz
 	tar xzf $<
 	mv mintlib-master "mintlib-src"
 	touch $@
@@ -105,7 +118,7 @@ fdlibm/.done: fdlibm-src/.done
 	mv fdlibm/usr/lib/m68020-60/* fdlibm/usr/lib && rmdir fdlibm/usr/lib/m68020-60
 	touch $@
 
-fdlibm-src/.done: $(DOWNLOADS_DIR)/fdlibm.tar.gz
+fdlibm-src/.done: $(DOWNLOADS_DIR)/fdlibm-src.tar.gz
 	tar xzf $<
 	mv fdlibm-master "fdlibm-src"
 	touch $@
@@ -144,11 +157,11 @@ $(DOWNLOADS_DIR)/gcc.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
 	wget -q -O $@ "https://github.com/freemint/m68k-atari-mint-gcc/releases/download/gcc-7_4_0-mint-20190228/gcc-7.4.0-m68020-60mint.tar.bz2"
 
-$(DOWNLOADS_DIR)/mintlib.tar.gz:
+$(DOWNLOADS_DIR)/mintlib-src.tar.gz:
 	mkdir -p $(DOWNLOADS_DIR)
 	wget -q -O $@ "https://github.com/freemint/mintlib/archive/master.tar.gz"
 
-$(DOWNLOADS_DIR)/fdlibm.tar.gz:
+$(DOWNLOADS_DIR)/fdlibm-src.tar.gz:
 	mkdir -p $(DOWNLOADS_DIR)
 	wget -q -O $@ "https://github.com/freemint/fdlibm/archive/master.tar.gz"
 
