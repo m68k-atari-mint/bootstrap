@@ -400,8 +400,7 @@ setenv SHELL   /bin/bash
 # Otherwise, if your init program is not GEM, you should use INIT= as
 # follows:
 
-#INIT=/usr/sbin/sshd
-INIT=/bin/bash
+INIT=/usr/sbin/sshd -r -D
 
 # If you leave both commands above commented out, the MiNT will
 # attempt to execute a file called `sh.tos' found in the system
