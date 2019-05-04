@@ -14,12 +14,18 @@ PATCHES_DIR	= patches
 
 ###############################################################################
 
-default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config
-	cp $(CONFIG_DIR)/mint.cnf freemint/mint/1-19-cur
-	mkdir -p freemint/mint/bin
-	cp $(TOOLS_DIR)/eth0-config.sh freemint/mint/bin
-	cp $(TOOLS_DIR)/nfeth-config freemint/mint/bin
+default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config freemint/mint/1-19-cur/mint.cnf freemint/mint/bin/eth0-config.sh freemint/mint/bin/nfeth-config
 	aranym-mmu -c aranym.config
+
+freemint/mint/1-19-cur/mint.cnf: $(CONFIG_DIR)/mint.cnf
+	cp $< $@
+
+freemint/mint/bin/eth0-config.sh: $(TOOLS_DIR)/eth0-config.sh
+	mkdir -p freemint/mint/bin
+	cp $< $@
+freemint/mint/bin/nfeth-config: $(TOOLS_DIR)/nfeth-config
+	mkdir -p freemint/mint/bin
+	cp $< $@
 
 aranym.config:
 	# unfortunately, ARAnyM can't have config in a subfolder
@@ -28,7 +34,7 @@ aranym.config:
 $(HOST_IMAGE): $(HOST_DRIVE)/.done
 	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) --squash $@
 
-$(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done awk/.done grep/.done diffutils/.done
+$(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done awk/.done grep/.done diffutils/.done make/.done
 	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var,var/log}
 
 	cp -ra $(CONFIG_DIR)/{etc,var} $(HOST_DRIVE)
@@ -44,6 +50,7 @@ $(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.
 	cp -ra awk/* $(HOST_DRIVE)
 	cp -ra grep/* $(HOST_DRIVE)
 	cp -ra diffutils/* $(HOST_DRIVE)
+	cp -ra make/* $(HOST_DRIVE)
 
 	ln -s bash $(HOST_DRIVE)/bin/sh
 
@@ -149,6 +156,10 @@ diffutils/.done: $(DOWNLOADS_DIR)/diffutils.tar.bz2
 	mkdir "diffutils" && tar xjf $< -C "diffutils"
 	touch $@
 
+make/.done: $(DOWNLOADS_DIR)/make.tar.bz2
+	mkdir "make" && tar xjf $< -C "make"
+	touch $@
+
 ###############################################################################
 
 $(DOWNLOADS_DIR)/emutos.zip:
@@ -202,6 +213,10 @@ $(DOWNLOADS_DIR)/grep.tar.bz2:
 $(DOWNLOADS_DIR)/diffutils.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
 	wget -q -O $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/diffutils/diffutils-3.3-bin-mint020-20131120.tar.bz2"
+
+$(DOWNLOADS_DIR)/make.tar.bz2:
+	mkdir -p $(DOWNLOADS_DIR)
+	wget -q -O $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/make/make-4.0-bin-mint020-20131109.tar.bz2"
 
 ###############################################################################
 
