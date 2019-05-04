@@ -28,8 +28,8 @@ aranym.config:
 $(HOST_IMAGE): $(HOST_DRIVE)/.done
 	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) --squash $@
 
-$(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done
-	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
+$(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done awk/.done
+	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var,var/log}
 
 	cp -ra $(CONFIG_DIR)/{etc,var} $(HOST_DRIVE)
 
@@ -41,12 +41,14 @@ $(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.
 	cp -ra fdlibm/* $(HOST_DRIVE)
 	cp -ra coreutils/* $(HOST_DRIVE)
 	cp -ra sed/* $(HOST_DRIVE)
+	cp -ra awk/* $(HOST_DRIVE)
 
 	# host's ssh-keygen is for some reason rejected ...
 	#ssh-keygen -t rsa -N "" -f $(HOST_DRIVE)/etc/ssh/ssh_host_rsa_key
 	#ssh-keygen -t dsa -N "" -f $(HOST_DRIVE)/etc/ssh/ssh_host_dsa_key
 	#ssh-keygen -t ecdsa -N "" -f $(HOST_DRIVE)/etc/ssh/ssh_host_ecdsa_key
 	mkdir -p $(HOST_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(HOST_DRIVE)/root/.ssh/authorized_keys
+	touch $(HOST_DRIVE)/var/log/lastlog
 
 	touch $@
 
@@ -131,6 +133,10 @@ sed/.done: $(DOWNLOADS_DIR)/sed.tar.bz2
 	mkdir "sed" && tar xjf $< -C "sed"
 	touch $@
 
+awk/.done: $(DOWNLOADS_DIR)/awk.tar.bz2
+	mkdir "awk" && tar xjf $< -C "awk"
+	touch $@
+
 ###############################################################################
 
 $(DOWNLOADS_DIR)/emutos.zip:
@@ -173,6 +179,10 @@ $(DOWNLOADS_DIR)/sed.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
 	wget -q -O $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/sed/sed-4.2.2-bin-mint020-20131119.tar.bz2"
 
+$(DOWNLOADS_DIR)/awk.tar.bz2:
+	mkdir -p $(DOWNLOADS_DIR)
+	wget -q -O $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/gawk/gawk-4.1.0-bin-mint020-20131120.tar.bz2"
+
 ###############################################################################
 
 driveclean:
@@ -184,7 +194,7 @@ clean:
 	rm -rf $(HOST_DRIVE) $(TARGET_DRIVE)
 	rm -rf emutos freemint bash openssh binutils gcc
 	rm -rf mintlib-src mintlib fdlibm-src fdlibm
-	rm -rf coreutils sed
+	rm -rf coreutils sed awk
 
 distclean: clean
 	rm -rf $(DOWNLOADS_DIR)
