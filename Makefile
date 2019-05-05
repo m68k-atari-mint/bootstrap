@@ -34,12 +34,13 @@ aranym.config:
 $(HOST_IMAGE): $(HOST_DRIVE)/.done
 	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) --squash $@
 
-$(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done awk/.done grep/.done diffutils/.done make/.done
-	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var,var/log}
+$(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done awk/.done grep/.done diffutils/.done make/.done
+	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
 
 	cp -ra $(CONFIG_DIR)/{etc,var} $(HOST_DRIVE)
 
 	cp -ra bash/* $(HOST_DRIVE)
+	cp -ra oldstuff/* $(HOST_DRIVE)
 	cp -ra openssh/* $(HOST_DRIVE)
 	cp -ra binutils/* $(HOST_DRIVE)
 	cp -ra gcc/* $(HOST_DRIVE)
@@ -59,7 +60,6 @@ $(HOST_DRIVE)/.done: bash/.done openssh/.done binutils/.done gcc/.done mintlib/.
 	#ssh-keygen -t dsa -N "" -f $(HOST_DRIVE)/etc/ssh/ssh_host_dsa_key
 	#ssh-keygen -t ecdsa -N "" -f $(HOST_DRIVE)/etc/ssh/ssh_host_ecdsa_key
 	mkdir -p $(HOST_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(HOST_DRIVE)/root/.ssh/authorized_keys
-	touch $(HOST_DRIVE)/var/log/lastlog
 
 	touch $@
 
@@ -78,6 +78,7 @@ $(TARGET_DRIVE)/.done: binutils/.done gcc/.done mintlib/.done fdlibm/.done
 	cp -ra gcc/* $(TARGET_DRIVE)
 	cp -ra mintlib/* $(TARGET_DRIVE)
 	cp -ra fdlibm/* $(TARGET_DRIVE)
+	cp -ra oldstuff/* $(TARGET_DRIVE)
 
 	mkdir -p $(TARGET_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(TARGET_DRIVE)/root/.ssh/authorized_keys
 
@@ -98,6 +99,10 @@ freemint/.done: $(DOWNLOADS_DIR)/freemint.zip
 
 bash/.done: $(DOWNLOADS_DIR)/bash.tar.bz2
 	mkdir "bash" && tar xjf $< -C "bash"
+	touch $@
+
+oldstuff/.done: $(DOWNLOADS_DIR)/oldstuff.rpm
+	mkdir "oldstuff" && cd "oldstuff" && rpmextract.sh ../$<
 	touch $@
 
 openssh/.done: $(DOWNLOADS_DIR)/openssh.tar.bz2
@@ -174,6 +179,10 @@ $(DOWNLOADS_DIR)/bash.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
 	wget -q -O $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/bash/bash-4.4.12-bin-mint020-20170617.tar.bz2"
 
+$(DOWNLOADS_DIR)/oldstuff.rpm:
+	mkdir -p $(DOWNLOADS_DIR)
+	wget -q -O $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/oldstuff-1.0-3.m68kmint.rpm"
+
 $(DOWNLOADS_DIR)/openssh.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
 	wget -q -O $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/openssh/openssh-6.4p1-bin-mint020-20131219.tar.bz2"
@@ -227,7 +236,7 @@ clean:
 	rm -f aranym.config
 	rm -f $(HOST_IMAGE) $(TARGET_IMAGE)
 	rm -rf $(HOST_DRIVE) $(TARGET_DRIVE)
-	rm -rf emutos freemint bash openssh binutils gcc
+	rm -rf emutos freemint bash oldstuff openssh binutils gcc
 	rm -rf mintlib-src mintlib fdlibm-src fdlibm
 	rm -rf coreutils sed awk grep
 
