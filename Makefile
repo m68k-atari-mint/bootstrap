@@ -76,8 +76,6 @@ $(TARGET_DRIVE)/.done: binutils/.done gcc/.done mintlib/.done fdlibm/.done
 	# cheat a little :)
 	cp -ra binutils/* $(TARGET_DRIVE)
 	cp -ra gcc/* $(TARGET_DRIVE)
-	cp -ra mintlib/* $(TARGET_DRIVE)
-	cp -ra fdlibm/* $(TARGET_DRIVE)
 	cp -ra oldstuff/* $(TARGET_DRIVE)
 
 	mkdir -p $(TARGET_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(TARGET_DRIVE)/root/.ssh/authorized_keys
@@ -119,8 +117,8 @@ gcc/.done: $(DOWNLOADS_DIR)/gcc.tar.bz2
 
 mintlib/.done: mintlib-src/.done
 	cd "mintlib-src" && \
-	make CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="/usr" && \
-	make CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="/usr" install DESTDIR=$(PWD)/mintlib
+	make CROSS=yes prefix="/usr" && \
+	make CROSS=yes prefix="/usr" install DESTDIR=$(PWD)/mintlib
 	touch $@
 
 mintlib-src/.done: $(DOWNLOADS_DIR)/mintlib-src.tar.gz
@@ -131,9 +129,8 @@ mintlib-src/.done: $(DOWNLOADS_DIR)/mintlib-src.tar.gz
 fdlibm/.done: fdlibm-src/.done
 	cd "fdlibm-src" && \
 	./configure --host=m68k-atari-mint --prefix="/usr" && \
-	make CPU-FPU-TYPES=68020-60.68881 && \
-	make CPU-FPU-TYPES=68020-60.68881 install DESTDIR=$(PWD)/fdlibm
-	mv fdlibm/usr/lib/m68020-60/* fdlibm/usr/lib && rmdir fdlibm/usr/lib/m68020-60
+	make && \
+	make install DESTDIR=$(PWD)/fdlibm
 	touch $@
 
 fdlibm-src/.done: $(DOWNLOADS_DIR)/fdlibm-src.tar.gz
@@ -193,7 +190,7 @@ $(DOWNLOADS_DIR)/binutils.tar.bz2:
 
 $(DOWNLOADS_DIR)/gcc.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
-	wget -q -O $@ "https://github.com/freemint/m68k-atari-mint-gcc/releases/download/gcc-7_4_0-mint-20190228/gcc-7.4.0-m68020-60mint.tar.bz2"
+	wget -q -O $@ "https://github.com/freemint/m68k-atari-mint-gcc/releases/download/gcc-7_4_0-mint-20190228/gcc-7.4.0-m68000mint.tar.bz2"
 
 $(DOWNLOADS_DIR)/mintlib-src.tar.gz:
 	mkdir -p $(DOWNLOADS_DIR)
