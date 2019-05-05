@@ -15,7 +15,7 @@ PATCHES_DIR	= patches
 ###############################################################################
 
 default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config freemint/mint/1-19-cur/mint.cnf freemint/mint/bin/eth0-config.sh freemint/mint/bin/nfeth-config
-	aranym-mmu -c aranym.config
+	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null &
 
 freemint/mint/1-19-cur/mint.cnf: $(CONFIG_DIR)/mint.cnf
 	cp $< $@
