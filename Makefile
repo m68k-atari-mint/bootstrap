@@ -166,7 +166,7 @@ make/.done: $(DOWNLOADS_DIR)/make.tar.bz2
 
 $(DOWNLOADS_DIR)/emutos.zip:
 	mkdir -p $(DOWNLOADS_DIR)
-	wget -q -O $@ "http://downloads.sourceforge.net/project/emutos/emutos/0.9.10/emutos-aranym-0.9.10.zip"
+	wget -q -O $@ "http://downloads.sourceforge.net/project/emutos/snapshots/20190505-153546-7d0cad1/emutos-aranym-20190505-153546-7d0cad1.zip"
 
 $(DOWNLOADS_DIR)/freemint.zip:
 	mkdir -p $(DOWNLOADS_DIR)
