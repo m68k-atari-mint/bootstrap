@@ -3,9 +3,12 @@ aranym.config
 drive_c/
 drive_d/
 drive_e/
+drive_f/
 drive_d.img
 drive_e.img
+drive_f.img
 downloads/
+sources/
 emutos/
 freemint/
 bash/
@@ -20,7 +23,7 @@ fdlibm/
 fdlibm-src/
 coreutils/
 sed/
-awk/
+gawk/
 grep/
 diffutils/
 make/

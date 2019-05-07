@@ -11,10 +11,11 @@ TARGET_IMAGE_SIZE = 512
 FINAL_IMAGE	= $(FINAL_DRIVE).img
 FINAL_IMAGE_SIZE = 512
 
-CONFIG_DIR	= config
-DOWNLOADS_DIR	= downloads
-TOOLS_DIR	= tools
-PATCHES_DIR	= patches
+CONFIG_DIR	:= $(PWD)/config
+DOWNLOADS_DIR	:= $(PWD)/downloads
+TOOLS_DIR	:= $(PWD)/tools
+PATCHES_DIR	:= $(PWD)/patches
+SOURCES_DIR	:= $(PWD)/sources
 
 WGET		:= wget -q --no-check-certificate -O
 
@@ -22,6 +23,8 @@ WGET		:= wget -q --no-check-certificate -O
 
 default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config freemint/mint/1-19-cur/mint.cnf freemint/mint/bin/eth0-config.sh freemint/mint/bin/nfeth-config
 	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null &
+	sleep 3
+	ssh root@192.168.251.2 "cp -ra --no-preserve=ownership /g/$(TARGET_DRIVE)/* /e"
 
 freemint/mint/1-19-cur/mint.cnf: $(CONFIG_DIR)/mint.cnf
 	cp $< $@
@@ -40,7 +43,7 @@ aranym.config:
 $(HOST_IMAGE): $(HOST_DRIVE)/.done
 	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) --squash $@
 
-$(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/.done mintbin/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done awk/.done grep/.done diffutils/.done make/.done
+$(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/.done mintbin/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done gawk/.done grep/.done diffutils/.done make/.done
 	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
 
 	cp -ra $(CONFIG_DIR)/{etc,var} $(HOST_DRIVE)
@@ -55,7 +58,7 @@ $(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/
 	cp -ra fdlibm/* $(HOST_DRIVE)
 	cp -ra coreutils/* $(HOST_DRIVE)
 	cp -ra sed/* $(HOST_DRIVE)
-	cp -ra awk/* $(HOST_DRIVE)
+	cp -ra gawk/* $(HOST_DRIVE)
 	cp -ra grep/* $(HOST_DRIVE)
 	cp -ra diffutils/* $(HOST_DRIVE)
 	cp -ra make/* $(HOST_DRIVE)
@@ -77,13 +80,27 @@ $(TARGET_IMAGE): $(TARGET_DRIVE)/.done
 	dd if=/dev/zero of=$@ bs=1M count=$(TARGET_IMAGE_SIZE)
 	mkfs.ext2 $@
 
-$(TARGET_DRIVE)/.done: binutils/.done gcc/.done
+$(TARGET_DRIVE)/.done: binutils/.done gcc/.done oldstuff/.done $(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/readline/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/fdlibm/.done $(SOURCES_DIR)/gawk/.done $(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/mintbin/.done $(SOURCES_DIR)/mintlib/.done $(SOURCES_DIR)/sed/.done
+
 	mkdir -p $(TARGET_DRIVE)
+	mkdir -p $(TARGET_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
 
 	# cheat a little :)
 	cp -ra binutils/* $(TARGET_DRIVE)
 	cp -ra gcc/* $(TARGET_DRIVE)
 	cp -ra oldstuff/* $(TARGET_DRIVE)
+
+	cp -ra $(SOURCES_DIR)/bash $(TARGET_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/readline $(TARGET_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/coreutils $(TARGET_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/diffutils $(TARGET_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/fdlibm $(TARGET_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/gawk $(TARGET_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/grep $(TARGET_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/make $(TARGET_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/mintbin $(TARGET_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/mintlib $(TARGET_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/sed $(TARGET_DRIVE)/root
 
 	mkdir -p $(TARGET_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(TARGET_DRIVE)/root/.ssh/authorized_keys
 
@@ -107,7 +124,7 @@ bash/.done: $(DOWNLOADS_DIR)/bash.tar.bz2
 	touch $@
 
 oldstuff/.done: $(DOWNLOADS_DIR)/oldstuff.rpm
-	mkdir "oldstuff" && cd "oldstuff" && rpmextract.sh ../$<
+	mkdir "oldstuff" && cd "oldstuff" && rpmextract.sh $<
 	touch $@
 
 openssh/.done: $(DOWNLOADS_DIR)/openssh.tar.bz2
@@ -158,8 +175,8 @@ sed/.done: $(DOWNLOADS_DIR)/sed.tar.bz2
 	mkdir "sed" && tar xjf $< -C "sed"
 	touch $@
 
-awk/.done: $(DOWNLOADS_DIR)/awk.tar.bz2
-	mkdir "awk" && tar xjf $< -C "awk"
+gawk/.done: $(DOWNLOADS_DIR)/gawk.tar.bz2
+	mkdir "gawk" && tar xjf $< -C "gawk"
 	touch $@
 
 grep/.done: $(DOWNLOADS_DIR)/grep.tar.bz2
@@ -172,6 +189,52 @@ diffutils/.done: $(DOWNLOADS_DIR)/diffutils.tar.bz2
 
 make/.done: $(DOWNLOADS_DIR)/make.tar.bz2
 	mkdir "make" && tar xjf $< -C "make"
+	touch $@
+
+###############################################################################
+
+$(SOURCES_DIR)/bash/.done: $(SOURCES_DIR)/bash.tar.gz
+	cd $(SOURCES_DIR) && tar xzf $< && mv bash-* "bash"
+	touch $@
+
+$(SOURCES_DIR)/readline/.done: $(SOURCES_DIR)/readline.tar.gz
+	cd $(SOURCES_DIR) && tar xzf $< && mv readline-* "readline"
+	touch $@
+
+$(SOURCES_DIR)/coreutils/.done: $(SOURCES_DIR)/coreutils.tar.xz
+	cd $(SOURCES_DIR) && tar xJf $< && mv coreutils-* "coreutils"
+	touch $@
+
+$(SOURCES_DIR)/diffutils/.done: $(SOURCES_DIR)/diffutils.tar.xz
+	cd $(SOURCES_DIR) && tar xJf $< && mv diffutils-* "diffutils"
+	touch $@
+
+$(SOURCES_DIR)/fdlibm/.done: $(SOURCES_DIR)/fdlibm.tar.gz
+	cd $(SOURCES_DIR) && tar xzf $< && mv fdlibm-master "fdlibm"
+	touch $@
+
+$(SOURCES_DIR)/gawk/.done: $(SOURCES_DIR)/gawk.tar.xz
+	cd $(SOURCES_DIR) && tar xJf $< && mv gawk-* "gawk"
+	touch $@
+
+$(SOURCES_DIR)/grep/.done: $(SOURCES_DIR)/grep.tar.xz
+	cd $(SOURCES_DIR) && tar xJf $< && mv grep-* "grep"
+	touch $@
+
+$(SOURCES_DIR)/make/.done: $(SOURCES_DIR)/make.tar.bz2
+	cd $(SOURCES_DIR) && tar xjf $< && mv make-* "make"
+	touch $@
+
+$(SOURCES_DIR)/mintbin/.done: $(SOURCES_DIR)/mintbin.tar.gz
+	cd $(SOURCES_DIR) && tar xzf $< && mv mintbin-master "mintbin"
+	touch $@
+
+$(SOURCES_DIR)/mintlib/.done: $(SOURCES_DIR)/mintlib.tar.gz
+	cd $(SOURCES_DIR) && tar xzf $< && mv mintlib-master "mintlib"
+	touch $@
+
+$(SOURCES_DIR)/sed/.done: $(SOURCES_DIR)/sed.tar.xz
+	cd $(SOURCES_DIR) && tar xJf $< && mv sed-* "sed"
 	touch $@
 
 ###############################################################################
@@ -224,7 +287,7 @@ $(DOWNLOADS_DIR)/sed.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/sed/sed-4.2.2-bin-mint020-20131119.tar.bz2"
 
-$(DOWNLOADS_DIR)/awk.tar.bz2:
+$(DOWNLOADS_DIR)/gawk.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/gawk/gawk-4.1.0-bin-mint020-20131120.tar.bz2"
 
@@ -242,16 +305,64 @@ $(DOWNLOADS_DIR)/make.tar.bz2:
 
 ###############################################################################
 
+$(SOURCES_DIR)/bash.tar.gz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://ftp.gnu.org/gnu/bash/bash-5.0.tar.gz"
+
+$(SOURCES_DIR)/readline.tar.gz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://ftp.gnu.org/gnu/readline/readline-8.0.tar.gz"
+
+$(SOURCES_DIR)/coreutils.tar.xz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://ftp.gnu.org/gnu/coreutils/coreutils-8.31.tar.xz"
+
+$(SOURCES_DIR)/diffutils.tar.xz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://ftp.gnu.org/gnu/diffutils/diffutils-3.7.tar.xz"
+
+$(SOURCES_DIR)/fdlibm.tar.gz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://github.com/freemint/fdlibm/archive/master.tar.gz"
+
+$(SOURCES_DIR)/gawk.tar.xz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://ftp.gnu.org/gnu/gawk/gawk-5.0.0.tar.xz"
+
+$(SOURCES_DIR)/grep.tar.xz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://ftp.gnu.org/gnu/grep/grep-3.3.tar.xz"
+
+$(SOURCES_DIR)/make.tar.bz2:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://ftp.gnu.org/gnu/make/make-4.2.1.tar.bz2"
+
+$(SOURCES_DIR)/mintbin.tar.gz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://github.com/freemint/mintbin/archive/master.tar.gz"
+
+$(SOURCES_DIR)/mintlib.tar.gz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://github.com/freemint/mintlib/archive/master.tar.gz"
+
+$(SOURCES_DIR)/sed.tar.xz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://ftp.gnu.org/gnu/sed/sed-4.7.tar.xz"
+
+###############################################################################
+
 driveclean:
-	rm -f $(HOST_IMAGE) $(TARGET_IMAGE)
+	rm -f $(HOST_IMAGE) $(TARGET_IMAGE) $(FINAL_IMAGE)
 
 clean:
+	rm -f *~
 	rm -f aranym.config
 	rm -f $(HOST_IMAGE) $(TARGET_IMAGE)
 	rm -rf $(HOST_DRIVE) $(TARGET_DRIVE)
 	rm -rf emutos freemint bash oldstuff openssh binutils gcc mintbin
 	rm -rf mintlib-src mintlib fdlibm-src fdlibm
-	rm -rf coreutils sed awk grep diffutils make
+	rm -rf coreutils sed gawk grep diffutils make
+	rm -rf $(SOURCES_DIR)/{bash,readline,coreutils,diffutils,fdlibm,gawk,grep,make,mintbin,mintlib,sed}
 
 distclean: clean
-	rm -rf $(DOWNLOADS_DIR)
+	rm -rf $(DOWNLOADS_DIR) $(SOURCES_DIR)

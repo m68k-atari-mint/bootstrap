@@ -7,12 +7,12 @@ Bootstrap plan:
 	- emutos
 	- freemint
 - install to the cross image:
-	- awk
 	- bash
 	- binutils
 	- coreutils
 	- diffutils
 	- fdlibm (cross-compiled source)
+	- gawk
 	- gcc
 	- grep
 	- make
@@ -22,18 +22,18 @@ Bootstrap plan:
 	- openssh
 	- sed
 - ssh to the cross image, build and install to the native image (also create an .ipk for each of them):
-	- awk
 	- bash
 	- binutils (just copy over for now)
 	- coreutils
 	- diffutils
 	- fdlibm
+	- gawk
 	- gcc (just copy over for now)
 	- grep
 	- make
 	- mintbin
 	- mintlib
-	- oldstuff from SpareMiNT (most importantly, `shutdown`)
+	- oldstuff from SpareMiNT (just copy over for now)
 	- sed
 - (later...):
 	- zlib
