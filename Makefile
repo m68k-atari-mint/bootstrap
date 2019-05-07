@@ -40,7 +40,7 @@ aranym.config:
 $(HOST_IMAGE): $(HOST_DRIVE)/.done
 	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) --squash $@
 
-$(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done awk/.done grep/.done diffutils/.done make/.done
+$(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/.done mintbin/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done awk/.done grep/.done diffutils/.done make/.done
 	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
 
 	cp -ra $(CONFIG_DIR)/{etc,var} $(HOST_DRIVE)
@@ -50,6 +50,7 @@ $(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/
 	cp -ra openssh/* $(HOST_DRIVE)
 	cp -ra binutils/* $(HOST_DRIVE)
 	cp -ra gcc/* $(HOST_DRIVE)
+	cp -ra mintbin/* $(HOST_DRIVE)
 	cp -ra mintlib/* $(HOST_DRIVE)
 	cp -ra fdlibm/* $(HOST_DRIVE)
 	cp -ra coreutils/* $(HOST_DRIVE)
@@ -119,6 +120,10 @@ binutils/.done: $(DOWNLOADS_DIR)/binutils.tar.bz2
 
 gcc/.done: $(DOWNLOADS_DIR)/gcc.tar.bz2
 	mkdir "gcc" && tar xjf $< -C "gcc"
+	touch $@
+
+mintbin/.done: $(DOWNLOADS_DIR)/mintbin.tar.bz2
+	mkdir "mintbin" && tar xjf $< -C "mintbin"
 	touch $@
 
 mintlib/.done: mintlib-src/.done
@@ -199,6 +204,10 @@ $(DOWNLOADS_DIR)/gcc.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "https://github.com/freemint/m68k-atari-mint-gcc/releases/download/gcc-7_4_0-mint-20190228/gcc-7.4.0-m68020-60mint.tar.bz2"
 
+$(DOWNLOADS_DIR)/mintbin.tar.bz2:
+	mkdir -p $(DOWNLOADS_DIR)
+	$(WGET) $@ "https://github.com/freemint/freemint.github.io/raw/master/builds/mintbin/master/mintbin-6108285.tar.bz2"
+
 $(DOWNLOADS_DIR)/mintlib-src.tar.gz:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "https://github.com/freemint/mintlib/archive/master.tar.gz"
@@ -240,7 +249,7 @@ clean:
 	rm -f aranym.config
 	rm -f $(HOST_IMAGE) $(TARGET_IMAGE)
 	rm -rf $(HOST_DRIVE) $(TARGET_DRIVE)
-	rm -rf emutos freemint bash oldstuff openssh binutils gcc
+	rm -rf emutos freemint bash oldstuff openssh binutils gcc mintbin
 	rm -rf mintlib-src mintlib fdlibm-src fdlibm
 	rm -rf coreutils sed awk grep diffutils make
 

@@ -16,6 +16,7 @@ Bootstrap plan:
 	- gcc
 	- grep
 	- make
+	- mintbin
 	- mintlib (cross-compiled source)
 	- oldstuff from SpareMiNT (most importantly, `shutdown`)
 	- openssh
@@ -30,6 +31,7 @@ Bootstrap plan:
 	- gcc (just copy over for now)
 	- grep
 	- make
+	- mintbin
 	- mintlib
 	- oldstuff from SpareMiNT (most importantly, `shutdown`)
 	- sed

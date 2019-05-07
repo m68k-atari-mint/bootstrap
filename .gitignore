@@ -13,6 +13,7 @@ oldstuff/
 openssh/
 binutils/
 gcc/
+mintbin/
 mintlib-src/
 mintlib/
 fdlibm/
