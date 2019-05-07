@@ -1,11 +1,15 @@
 HOST_DRIVE	= drive_d
 TARGET_DRIVE	= drive_e
+FINAL_DRIVE	= drive_f
 
 HOST_IMAGE	= $(HOST_DRIVE).img
 HOST_IMAGE_SIZE	= 256
 
 TARGET_IMAGE	= $(TARGET_DRIVE).img
 TARGET_IMAGE_SIZE = 512
+
+FINAL_IMAGE	= $(FINAL_DRIVE).img
+FINAL_IMAGE_SIZE = 512
 
 CONFIG_DIR	= config
 DOWNLOADS_DIR	= downloads
@@ -72,7 +76,7 @@ $(TARGET_IMAGE): $(TARGET_DRIVE)/.done
 	dd if=/dev/zero of=$@ bs=1M count=$(TARGET_IMAGE_SIZE)
 	mkfs.ext2 $@
 
-$(TARGET_DRIVE)/.done: binutils/.done gcc/.done mintlib/.done fdlibm/.done
+$(TARGET_DRIVE)/.done: binutils/.done gcc/.done
 	mkdir -p $(TARGET_DRIVE)
 
 	# cheat a little :)

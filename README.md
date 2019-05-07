@@ -1,5 +1,8 @@
 Bootstrap plan:
-- need to create an image which is able to build packages and eventually, opkg
+- we need to create three images:
+	1. Cross compiled binaries (to compile sources natively)
+	2. Natively compiled binaries (to compile sources for the final image)
+	3. Final image with only bash, openssh and opkg
 - install to the host drive:
 	- emutos
 	- freemint
@@ -8,28 +11,30 @@ Bootstrap plan:
 	- bash
 	- binutils
 	- coreutils
+	- diffutils
+	- fdlibm (cross-compiled source)
 	- gcc
 	- grep
-	- openssh
-	- perl 5.6 (for native openssh)
-	- sed
-	- (maybe others, depending on 'make check' requirements of building packages)
-- use a cross-compiler to build and install to both the cross and native image:
-	- mintlib (also create an .ipk)
-	- fdlibm (also create an .ipk)
-- ssh to the cross image, build and install to the native image (also create an .ipk for each of them):
-	- sed
 	- make
+	- mintlib (cross-compiled source)
+	- oldstuff from SpareMiNT (most importantly, `shutdown`)
+	- openssh
+	- sed
+- ssh to the cross image, build and install to the native image (also create an .ipk for each of them):
 	- awk
-	- coreutils
-	- grep
-	- perl (perhaps build the one from sparemint?)
 	- bash
+	- binutils (just copy over for now)
+	- coreutils
+	- diffutils
+	- fdlibm
+	- gcc (just copy over for now)
+	- grep
+	- make
+	- mintlib
+	- oldstuff from SpareMiNT (most importantly, `shutdown`)
+	- sed
 - (later...):
 	- zlib
-	- bzip2
-	- xz
-	- zstd
 	- openssl
 	- openssh
 	- libarchive
