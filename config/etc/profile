@@ -1,3 +1,23 @@
+umask 022
+
+prependpath () {
+    case ":$PATH:" in
+        *:"$1":*)
+            ;;
+        *)
+            PATH="$1${PATH:+:$PATH}"
+    esac
+}
+
+prependpath '/usr/local/sbin'
+prependpath '/usr/local/bin'
+unset prependpath
+
+export PATH
+
 PS1='[\[\e[31m\]\u\[\e[m\]@\[\e[32m\]\h\[\e[m\] \W]\$ '
 export PS1
 alias ls='ls --color'
+
+UNIXMODE=/brUs
+export UNIXMODE
