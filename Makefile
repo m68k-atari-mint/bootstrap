@@ -18,6 +18,7 @@ PATCHES_DIR	:= $(PWD)/patches
 SOURCES_DIR	:= $(PWD)/sources
 
 WGET		:= wget -q --no-check-certificate -O
+CONFIGURE	:= source /etc/profile; ./configure CFLAGS='-O2 -fomit-frame-pointer -I/usr/local/include' LDFLAGS='-L/usr/local/lib'
 
 ###############################################################################
 
@@ -25,6 +26,21 @@ default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config
 	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null &
 	sleep 3
 	ssh root@192.168.251.2 "cp -ra --no-preserve=ownership /g/$(TARGET_DRIVE)/* /e"
+
+	ssh root@192.168.251.2 "cd /e/root/grep && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
+	ssh root@192.168.251.2 "cd /e/root/sed && $(CONFIGURE) --prefix=/usr --disable-nls --disable-i18n && make && make install DESTDIR=/e"
+
+	ssh root@192.168.251.2 "cd /e/root/make && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
+	ssh root@192.168.251.2 "cd /e/root/bison && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
+	# TODO: make 'sh' too
+	ssh root@192.168.251.2 "cd /e/root/bash && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
+	ssh root@192.168.251.2 "cd /e/root/gawk && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
+
+	#cp -ra $(SOURCES_DIR)/coreutils $(TARGET_DRIVE)/root
+	#cp -ra $(SOURCES_DIR)/diffutils $(TARGET_DRIVE)/root
+	#cp -ra $(SOURCES_DIR)/fdlibm $(TARGET_DRIVE)/root
+	#cp -ra $(SOURCES_DIR)/mintbin $(TARGET_DRIVE)/root
+	#cp -ra $(SOURCES_DIR)/mintlib $(TARGET_DRIVE)/root
 
 freemint/mint/1-19-cur/mint.cnf: $(CONFIG_DIR)/mint.cnf
 	cp $< $@
@@ -43,7 +59,7 @@ aranym.config:
 $(HOST_IMAGE): $(HOST_DRIVE)/.done
 	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) --squash $@
 
-$(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/.done mintbin/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done gawk/.done grep/.done diffutils/.done make/.done
+$(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/.done mintbin/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done gawk/.done grep/.done diffutils/.done make/.done bison/.done
 	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
 
 	cp -ra $(CONFIG_DIR)/{etc,var} $(HOST_DRIVE)
@@ -62,6 +78,7 @@ $(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/
 	cp -ra grep/* $(HOST_DRIVE)
 	cp -ra diffutils/* $(HOST_DRIVE)
 	cp -ra make/* $(HOST_DRIVE)
+	cp -ra bison/* $(HOST_DRIVE)
 
 	ln -s bash $(HOST_DRIVE)/bin/sh
 
@@ -80,7 +97,7 @@ $(TARGET_IMAGE): $(TARGET_DRIVE)/.done
 	dd if=/dev/zero of=$@ bs=1M count=$(TARGET_IMAGE_SIZE)
 	mkfs.ext2 $@
 
-$(TARGET_DRIVE)/.done: binutils/.done gcc/.done oldstuff/.done $(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/readline/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/fdlibm/.done $(SOURCES_DIR)/gawk/.done $(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/mintbin/.done $(SOURCES_DIR)/mintlib/.done $(SOURCES_DIR)/sed/.done
+$(TARGET_DRIVE)/.done: binutils/.done gcc/.done oldstuff/.done $(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/bison/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/fdlibm/.done $(SOURCES_DIR)/gawk/.done $(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/mintbin/.done $(SOURCES_DIR)/mintlib/.done $(SOURCES_DIR)/sed/.done
 
 	mkdir -p $(TARGET_DRIVE)
 	mkdir -p $(TARGET_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
@@ -91,7 +108,7 @@ $(TARGET_DRIVE)/.done: binutils/.done gcc/.done oldstuff/.done $(SOURCES_DIR)/ba
 	cp -ra oldstuff/* $(TARGET_DRIVE)
 
 	cp -ra $(SOURCES_DIR)/bash $(TARGET_DRIVE)/root
-	cp -ra $(SOURCES_DIR)/readline $(TARGET_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/bison $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/coreutils $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/diffutils $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/fdlibm $(TARGET_DRIVE)/root
@@ -191,14 +208,18 @@ make/.done: $(DOWNLOADS_DIR)/make.tar.bz2
 	mkdir "make" && tar xjf $< -C "make"
 	touch $@
 
+bison/.done: $(DOWNLOADS_DIR)/bison.tar.bz2
+	mkdir "bison" && tar xjf $< -C "bison"
+	touch $@
+
 ###############################################################################
 
 $(SOURCES_DIR)/bash/.done: $(SOURCES_DIR)/bash.tar.gz
 	cd $(SOURCES_DIR) && tar xzf $< && mv bash-* "bash"
 	touch $@
 
-$(SOURCES_DIR)/readline/.done: $(SOURCES_DIR)/readline.tar.gz
-	cd $(SOURCES_DIR) && tar xzf $< && mv readline-* "readline"
+$(SOURCES_DIR)/bison/.done: $(SOURCES_DIR)/bison.tar.xz
+	cd $(SOURCES_DIR) && tar xJf $< && mv bison-* "bison"
 	touch $@
 
 $(SOURCES_DIR)/coreutils/.done: $(SOURCES_DIR)/coreutils.tar.xz
@@ -303,15 +324,19 @@ $(DOWNLOADS_DIR)/make.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/make/make-4.0-bin-mint020-20131109.tar.bz2"
 
+$(DOWNLOADS_DIR)/bison.tar.bz2:
+	mkdir -p $(DOWNLOADS_DIR)
+	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/bison/bison-3.0.1-bin-mint020-20131121.tar.bz2"
+
 ###############################################################################
 
 $(SOURCES_DIR)/bash.tar.gz:
 	mkdir -p $(SOURCES_DIR)
 	$(WGET) $@ "https://ftp.gnu.org/gnu/bash/bash-5.0.tar.gz"
 
-$(SOURCES_DIR)/readline.tar.gz:
+$(SOURCES_DIR)/bison.tar.xz:
 	mkdir -p $(SOURCES_DIR)
-	$(WGET) $@ "https://ftp.gnu.org/gnu/readline/readline-8.0.tar.gz"
+	$(WGET) $@ "https://ftp.gnu.org/gnu/bison/bison-3.3.2.tar.xz"
 
 $(SOURCES_DIR)/coreutils.tar.xz:
 	mkdir -p $(SOURCES_DIR)
@@ -361,8 +386,8 @@ clean:
 	rm -rf $(HOST_DRIVE) $(TARGET_DRIVE)
 	rm -rf emutos freemint bash oldstuff openssh binutils gcc mintbin
 	rm -rf mintlib-src mintlib fdlibm-src fdlibm
-	rm -rf coreutils sed gawk grep diffutils make
-	rm -rf $(SOURCES_DIR)/{bash,readline,coreutils,diffutils,fdlibm,gawk,grep,make,mintbin,mintlib,sed}
+	rm -rf coreutils sed gawk grep diffutils make bison
+	rm -rf $(SOURCES_DIR)/{bash,bison,coreutils,diffutils,fdlibm,gawk,grep,make,mintbin,mintlib,sed}
 
 distclean: clean
 	rm -rf $(DOWNLOADS_DIR) $(SOURCES_DIR)

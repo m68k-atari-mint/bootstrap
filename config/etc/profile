@@ -21,3 +21,9 @@ alias ls='ls --color'
 
 UNIXMODE=/brUs
 export UNIXMODE
+
+TMPDIR=/tmp
+export TMPDIR
+
+STACKSIZE=500000
+export STACKSIZE
