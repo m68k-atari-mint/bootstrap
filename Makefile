@@ -1,3 +1,5 @@
+SHELL		:= /bin/bash
+
 HOST_DRIVE	= drive_d
 TARGET_DRIVE	= drive_e
 FINAL_DRIVE	= drive_f
@@ -31,6 +33,7 @@ default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config
 	ssh root@192.168.251.2 "cd /e/root/sed && $(CONFIGURE) --prefix=/usr --disable-nls --disable-i18n && make && make install DESTDIR=/e"
 
 	ssh root@192.168.251.2 "cd /e/root/make && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
+	# needs m4
 	ssh root@192.168.251.2 "cd /e/root/bison && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
 	# TODO: make 'sh' too
 	ssh root@192.168.251.2 "cd /e/root/bash && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
@@ -40,6 +43,7 @@ default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config
 	#cp -ra $(SOURCES_DIR)/diffutils $(TARGET_DRIVE)/root
 	#cp -ra $(SOURCES_DIR)/fdlibm $(TARGET_DRIVE)/root
 	#cp -ra $(SOURCES_DIR)/mintbin $(TARGET_DRIVE)/root
+	# needs bison, flex, bash
 	#cp -ra $(SOURCES_DIR)/mintlib $(TARGET_DRIVE)/root
 
 freemint/mint/1-19-cur/mint.cnf: $(CONFIG_DIR)/mint.cnf
@@ -141,7 +145,13 @@ bash/.done: $(DOWNLOADS_DIR)/bash.tar.bz2
 	touch $@
 
 oldstuff/.done: $(DOWNLOADS_DIR)/oldstuff.rpm
-	mkdir "oldstuff" && cd "oldstuff" && rpmextract.sh $<
+	mkdir "oldstuff" && cd "oldstuff" && \
+	if [ $(shell which rpm2cpio) ]; \
+	then \
+		rpm2cpio $< | cpio -i --make-directories; \
+	else \
+		rpmextract.sh $<; \
+	fi
 	touch $@
 
 openssh/.done: $(DOWNLOADS_DIR)/openssh.tar.bz2
@@ -162,8 +172,8 @@ mintbin/.done: $(DOWNLOADS_DIR)/mintbin.tar.bz2
 
 mintlib/.done: mintlib-src/.done
 	cd "mintlib-src" && \
-	make CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="/usr" && \
-	make CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="/usr" install DESTDIR=$(PWD)/mintlib
+	make SHELL=/bin/bash CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="/usr" && \
+	make SHELL=/bin/bash CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="/usr" install DESTDIR=$(PWD)/mintlib
 	touch $@
 
 mintlib-src/.done: $(DOWNLOADS_DIR)/mintlib-src.tar.gz
