@@ -21,6 +21,7 @@ SOURCES_DIR	:= $(PWD)/sources
 
 WGET		:= wget -q --no-check-certificate -O
 CONFIGURE	:= source /etc/profile; ./configure CFLAGS='-O2 -fomit-frame-pointer -I/usr/local/include' LDFLAGS='-L/usr/local/lib'
+BASH_CONFIGURE	:= source /etc/profile; /bin/bash ./configure CFLAGS='-O2 -fomit-frame-pointer -I/usr/local/include' LDFLAGS='-L/usr/local/lib'
 ARANYM_JIT	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-jit -c aranym.config 2> /dev/null &
 ARANYM_MMU	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null &
 SSH		:= ssh root@192.168.251.2
@@ -55,7 +56,8 @@ default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config
 	$(ARANYM_MMU)
 	sleep 3
 	$(SSH) "cd /e/root/gawk && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
-	$(SSH) "cd /e/root/grep && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
+	# grep is lying, its ./configure needs full bash to work properly
+	$(SSH) "cd /e/root/grep && $(BASH_CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
 	$(SSH) "cd /e/root/sed && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls --disable-i18n"
 	$(SSH) "cd /e/root/make && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
 	-$(SSH) "shutdown"
