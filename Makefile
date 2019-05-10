@@ -8,7 +8,7 @@ HOST_IMAGE	= $(HOST_DRIVE).img
 HOST_IMAGE_SIZE	= 256
 
 TARGET_IMAGE	= $(TARGET_DRIVE).img
-TARGET_IMAGE_SIZE = 512
+TARGET_IMAGE_SIZE = 1024
 
 FINAL_IMAGE	= $(FINAL_DRIVE).img
 FINAL_IMAGE_SIZE = 512
@@ -21,23 +21,55 @@ SOURCES_DIR	:= $(PWD)/sources
 
 WGET		:= wget -q --no-check-certificate -O
 CONFIGURE	:= source /etc/profile; ./configure CFLAGS='-O2 -fomit-frame-pointer -I/usr/local/include' LDFLAGS='-L/usr/local/lib'
+ARANYM_JIT	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-jit -c aranym.config 2> /dev/null &
+ARANYM_MMU	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null &
+SSH		:= ssh root@192.168.251.2
 
 ###############################################################################
 
 default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config freemint/mint/1-19-cur/mint.cnf freemint/mint/bin/eth0-config.sh freemint/mint/bin/nfeth-config
-	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null &
+	$(ARANYM_JIT)
 	sleep 3
-	ssh root@192.168.251.2 "cp -ra --no-preserve=ownership /g/$(TARGET_DRIVE)/* /e"
+	$(SSH) "cp -ra --no-preserve=ownership /g/$(TARGET_DRIVE)/* /e"
+	-$(SSH) "shutdown"
+	sleep 7
 
-	ssh root@192.168.251.2 "cd /e/root/grep && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
-	ssh root@192.168.251.2 "cd /e/root/sed && $(CONFIGURE) --prefix=/usr --disable-nls --disable-i18n && make && make install DESTDIR=/e"
+	# ./configure in an MMU-enabled setup to avoid any nasty surprises
+	$(ARANYM_MMU)
+	sleep 3
+	$(SSH) "cd /e/root/bash-minimal && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls --enable-minimal-config"
+	$(SSH) "cd /e/root/bash && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
+	-$(SSH) "shutdown"
+	sleep 7
+	# make && make install in a fastest possible way
+	$(ARANYM_JIT)
+	sleep 3
+	$(SSH) "cd /e/root/bash-minimal && make && make install-strip DESTDIR=/e"
+	# a bit hackish but this will ensure the safest ./configure environment for other packages
+	$(SSH) "mv /e/bin/bash /e/bin/sh && rm /bin/sh && cp /e/bin/sh /bin"
+	$(SSH) "cd /e/root/bash && make && make install-strip DESTDIR=/e"
+	$(SSH) "rm /bin/bash && cp /e/bin/bash /bin"
+	-$(SSH) "shutdown"
+	sleep 7
 
-	ssh root@192.168.251.2 "cd /e/root/make && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
+	$(ARANYM_MMU)
+	sleep 3
+	$(SSH) "cd /e/root/gawk && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
+	$(SSH) "cd /e/root/grep && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
+	$(SSH) "cd /e/root/sed && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls --disable-i18n"
+	$(SSH) "cd /e/root/make && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
+	-$(SSH) "shutdown"
+	sleep 7
+
+	$(ARANYM_JIT)
+	sleep 3
+	$(SSH) "cd /e/root/gawk && make && make install-strip DESTDIR=/e"
+	$(SSH) "cd /e/root/grep && make && make install-strip DESTDIR=/e"
+	$(SSH) "cd /e/root/sed && make && make install-strip DESTDIR=/e"
+	$(SSH) "cd /e/root/make && make && make install-strip DESTDIR=/e"
+
 	# needs m4
-	ssh root@192.168.251.2 "cd /e/root/bison && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
-	# TODO: make 'sh' too
-	ssh root@192.168.251.2 "cd /e/root/bash && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
-	ssh root@192.168.251.2 "cd /e/root/gawk && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
+	#ssh root@192.168.251.2 "cd /e/root/bison && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
 
 	#cp -ra $(SOURCES_DIR)/coreutils $(TARGET_DRIVE)/root
 	#cp -ra $(SOURCES_DIR)/diffutils $(TARGET_DRIVE)/root
@@ -45,6 +77,12 @@ default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config
 	#cp -ra $(SOURCES_DIR)/mintbin $(TARGET_DRIVE)/root
 	# needs bison, flex, bash
 	#cp -ra $(SOURCES_DIR)/mintlib $(TARGET_DRIVE)/root
+
+.PHONY: configure
+configure:
+
+.PHONY: build
+build:
 
 freemint/mint/1-19-cur/mint.cnf: $(CONFIG_DIR)/mint.cnf
 	cp $< $@
@@ -86,10 +124,6 @@ $(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/
 
 	ln -s bash $(HOST_DRIVE)/bin/sh
 
-	# host's ssh-keygen is for some reason rejected ...
-	#ssh-keygen -t rsa -N "" -f $(HOST_DRIVE)/etc/ssh/ssh_host_rsa_key
-	#ssh-keygen -t dsa -N "" -f $(HOST_DRIVE)/etc/ssh/ssh_host_dsa_key
-	#ssh-keygen -t ecdsa -N "" -f $(HOST_DRIVE)/etc/ssh/ssh_host_ecdsa_key
 	mkdir -p $(HOST_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(HOST_DRIVE)/root/.ssh/authorized_keys
 
 	touch $@
@@ -112,6 +146,7 @@ $(TARGET_DRIVE)/.done: binutils/.done gcc/.done oldstuff/.done $(SOURCES_DIR)/ba
 	cp -ra oldstuff/* $(TARGET_DRIVE)
 
 	cp -ra $(SOURCES_DIR)/bash $(TARGET_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/bash $(TARGET_DRIVE)/root/bash-minimal
 	cp -ra $(SOURCES_DIR)/bison $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/coreutils $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/diffutils $(TARGET_DRIVE)/root
@@ -145,13 +180,14 @@ bash/.done: $(DOWNLOADS_DIR)/bash.tar.bz2
 	touch $@
 
 oldstuff/.done: $(DOWNLOADS_DIR)/oldstuff.rpm
-	mkdir "oldstuff" && cd "oldstuff" && \
-	if [ $(shell which rpm2cpio) ]; \
-	then \
-		rpm2cpio $< | cpio -i --make-directories; \
-	else \
-		rpmextract.sh $<; \
-	fi
+	mkdir "oldstuff" && cd "oldstuff" && rpmextract.sh $<
+	#\
+	#if [ $(shell which rpm2cpio) ]; \
+	#then \
+	#	rpm2cpio $< | cpio -i --make-directories; \
+	#else \
+	#	rpmextract.sh $<; \
+	#fi
 	touch $@
 
 openssh/.done: $(DOWNLOADS_DIR)/openssh.tar.bz2
@@ -226,6 +262,7 @@ bison/.done: $(DOWNLOADS_DIR)/bison.tar.bz2
 
 $(SOURCES_DIR)/bash/.done: $(SOURCES_DIR)/bash.tar.gz
 	cd $(SOURCES_DIR) && tar xzf $< && mv bash-* "bash"
+	cd $(SOURCES_DIR)/bash && cat $(PATCHES_DIR)/bash-4.4-patches/* | patch -p0
 	touch $@
 
 $(SOURCES_DIR)/bison/.done: $(SOURCES_DIR)/bison.tar.xz
@@ -342,7 +379,7 @@ $(DOWNLOADS_DIR)/bison.tar.bz2:
 
 $(SOURCES_DIR)/bash.tar.gz:
 	mkdir -p $(SOURCES_DIR)
-	$(WGET) $@ "https://ftp.gnu.org/gnu/bash/bash-5.0.tar.gz"
+	$(WGET) $@ "https://ftp.gnu.org/gnu/bash/bash-4.4.tar.gz"
 
 $(SOURCES_DIR)/bison.tar.xz:
 	mkdir -p $(SOURCES_DIR)
@@ -386,18 +423,20 @@ $(SOURCES_DIR)/sed.tar.xz:
 
 ###############################################################################
 
+.PHONY: driveclean
 driveclean:
 	rm -f $(HOST_IMAGE) $(TARGET_IMAGE) $(FINAL_IMAGE)
+	rm -rf $(HOST_DRIVE) $(TARGET_DRIVE) $(FINAL_DRIVE)
 
-clean:
+.PHONY: clean
+clean: driveclean
 	rm -f *~
 	rm -f aranym.config
-	rm -f $(HOST_IMAGE) $(TARGET_IMAGE)
-	rm -rf $(HOST_DRIVE) $(TARGET_DRIVE)
 	rm -rf emutos freemint bash oldstuff openssh binutils gcc mintbin
 	rm -rf mintlib-src mintlib fdlibm-src fdlibm
 	rm -rf coreutils sed gawk grep diffutils make bison
 	rm -rf $(SOURCES_DIR)/{bash,bison,coreutils,diffutils,fdlibm,gawk,grep,make,mintbin,mintlib,sed}
 
+.PHONY: distclean
 distclean: clean
 	rm -rf $(DOWNLOADS_DIR) $(SOURCES_DIR)
