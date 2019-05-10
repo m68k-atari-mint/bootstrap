@@ -135,7 +135,7 @@ $(TARGET_IMAGE): $(TARGET_DRIVE)/.done
 	dd if=/dev/zero of=$@ bs=1M count=$(TARGET_IMAGE_SIZE)
 	mkfs.ext2 $@
 
-$(TARGET_DRIVE)/.done: binutils/.done gcc/.done oldstuff/.done $(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/bison/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/fdlibm/.done $(SOURCES_DIR)/gawk/.done $(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/mintbin/.done $(SOURCES_DIR)/mintlib/.done $(SOURCES_DIR)/sed/.done
+$(TARGET_DRIVE)/.done: binutils/.done gcc/.done oldstuff/.done $(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/bison/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/fdlibm/.done $(SOURCES_DIR)/gawk/.done $(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/m4/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/mintbin/.done $(SOURCES_DIR)/mintlib/.done $(SOURCES_DIR)/sed/.done
 
 	mkdir -p $(TARGET_DRIVE)
 	mkdir -p $(TARGET_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
@@ -153,6 +153,7 @@ $(TARGET_DRIVE)/.done: binutils/.done gcc/.done oldstuff/.done $(SOURCES_DIR)/ba
 	cp -ra $(SOURCES_DIR)/fdlibm $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/gawk $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/grep $(TARGET_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/m4 $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/make $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/mintbin $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/mintlib $(TARGET_DRIVE)/root
@@ -289,6 +290,10 @@ $(SOURCES_DIR)/grep/.done: $(SOURCES_DIR)/grep.tar.xz
 	cd $(SOURCES_DIR) && tar xJf $< && mv grep-* "grep"
 	touch $@
 
+$(SOURCES_DIR)/m4/.done: $(SOURCES_DIR)/m4.tar.xz
+	cd $(SOURCES_DIR) && tar xJf $< && mv m4-* "m4"
+	touch $@
+
 $(SOURCES_DIR)/make/.done: $(SOURCES_DIR)/make.tar.bz2
 	cd $(SOURCES_DIR) && tar xjf $< && mv make-* "make"
 	touch $@
@@ -405,6 +410,10 @@ $(SOURCES_DIR)/grep.tar.xz:
 	mkdir -p $(SOURCES_DIR)
 	$(WGET) $@ "https://ftp.gnu.org/gnu/grep/grep-3.3.tar.xz"
 
+$(SOURCES_DIR)/m4.tar.xz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.xz"
+
 $(SOURCES_DIR)/make.tar.bz2:
 	mkdir -p $(SOURCES_DIR)
 	$(WGET) $@ "https://ftp.gnu.org/gnu/make/make-4.2.1.tar.bz2"
@@ -435,7 +444,7 @@ clean: driveclean
 	rm -rf emutos freemint bash oldstuff openssh binutils gcc mintbin
 	rm -rf mintlib-src mintlib fdlibm-src fdlibm
 	rm -rf coreutils sed gawk grep diffutils make bison
-	rm -rf $(SOURCES_DIR)/{bash,bison,coreutils,diffutils,fdlibm,gawk,grep,make,mintbin,mintlib,sed}
+	rm -rf $(SOURCES_DIR)/{bash,bison,coreutils,diffutils,fdlibm,gawk,grep,m4,make,mintbin,mintlib,sed}
 
 .PHONY: distclean
 distclean: clean
