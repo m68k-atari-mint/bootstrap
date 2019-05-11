@@ -21,7 +21,6 @@ SOURCES_DIR	:= $(PWD)/sources
 
 WGET		:= wget -q --no-check-certificate -O
 CONFIGURE	:= source /etc/profile; ./configure CFLAGS='-O2 -fomit-frame-pointer -I/usr/local/include' LDFLAGS='-L/usr/local/lib'
-BASH_CONFIGURE	:= source /etc/profile; /bin/bash ./configure CFLAGS='-O2 -fomit-frame-pointer -I/usr/local/include' LDFLAGS='-L/usr/local/lib'
 ARANYM_JIT	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-jit -c aranym.config 2> /dev/null &
 ARANYM_MMU	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null &
 SSH		:= ssh root@192.168.251.2
@@ -30,41 +29,44 @@ SSH		:= ssh root@192.168.251.2
 
 default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config freemint/mint/1-19-cur/mint.cnf freemint/mint/bin/eth0-config.sh freemint/mint/bin/nfeth-config
 	$(ARANYM_JIT)
-	sleep 3
+	sleep 7
 	$(SSH) "cp -ra --no-preserve=ownership /g/$(TARGET_DRIVE)/* /e"
 	-$(SSH) "shutdown"
 	sleep 7
 
 	# ./configure in an MMU-enabled setup to avoid any nasty surprises
 	$(ARANYM_MMU)
-	sleep 3
+	sleep 7
 	$(SSH) "cd /e/root/bash-minimal && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls --enable-minimal-config"
 	$(SSH) "cd /e/root/bash && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
 	-$(SSH) "shutdown"
 	sleep 7
 	# make && make install in a fastest possible way
 	$(ARANYM_JIT)
-	sleep 3
+	sleep 7
 	$(SSH) "cd /e/root/bash-minimal && make && make install-strip DESTDIR=/e"
 	# a bit hackish but this will ensure the safest ./configure environment for other packages
-	$(SSH) "mv /e/bin/bash /e/bin/sh && rm /bin/sh && cp /e/bin/sh /bin"
+	# don't enable it by default - there seems to be some regression (/bin/sh-2.05 seems to work)
+	#$(SSH) "mv /e/bin/bash /e/bin/sh && rm /bin/sh && cp /e/bin/sh /bin/sh"
+	$(SSH) "mv /e/bin/bash /e/bin/sh-4.4.23"
 	$(SSH) "cd /e/root/bash && make && make install-strip DESTDIR=/e"
-	$(SSH) "rm /bin/bash && cp /e/bin/bash /bin"
+	# /bin/sh is still needed, supply with /bin/bash for now
+	$(SSH) "rm /bin/sh && cp /e/bin/bash /bin/sh"
+	$(SSH) "rm /bin/bash && cp /e/bin/bash /bin/bash"
 	-$(SSH) "shutdown"
 	sleep 7
 
 	$(ARANYM_MMU)
-	sleep 3
+	sleep 7
 	$(SSH) "cd /e/root/gawk && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
-	# grep is lying, its ./configure needs full bash to work properly
-	$(SSH) "cd /e/root/grep && $(BASH_CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
+	$(SSH) "cd /e/root/grep && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
 	$(SSH) "cd /e/root/sed && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls --disable-i18n"
 	$(SSH) "cd /e/root/make && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
 	-$(SSH) "shutdown"
 	sleep 7
 
 	$(ARANYM_JIT)
-	sleep 3
+	sleep 7
 	$(SSH) "cd /e/root/gawk && make && make install-strip DESTDIR=/e"
 	$(SSH) "cd /e/root/grep && make && make install-strip DESTDIR=/e"
 	$(SSH) "cd /e/root/sed && make && make install-strip DESTDIR=/e"
