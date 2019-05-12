@@ -17,7 +17,7 @@ PATCHES_DIR	:= $(PWD)/patches
 SOURCES_DIR	:= $(PWD)/sources
 
 WGET		:= wget -q --no-check-certificate -O
-CONFIGURE	:= source /etc/profile; ./configure CFLAGS='-O2 -fomit-frame-pointer -I/usr/local/include' LDFLAGS='-L/usr/local/lib' --config-cache
+CONFIGURE	:= configure CFLAGS='-O2 -fomit-frame-pointer' --config-cache --prefix=/usr --exec-prefix=/
 ARANYM_JIT	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-jit -c aranym.config 2> /dev/null &
 ARANYM_MMU	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null &
 SSH		:= ssh root@192.168.251.2
@@ -25,16 +25,29 @@ SSH		:= ssh root@192.168.251.2
 ###############################################################################
 
 default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) aranym.config
-	#$(ARANYM_MMU)
-	#sleep 7
-	#$(SSH) "cp -ra --no-preserve=ownership /g/$(TARGET_DRIVE)/* /e"
+	$(ARANYM_MMU)
+	sleep 7
+	$(SSH) "cp -ra /h/drive_e/* /e && chown -R root:root /e && chmod 700 /e/root/.ssh && chmod 600 /e/root/.ssh/authorized_keys"
 
 	# ./configure in an MMU-enabled setup to avoid any nasty surprises
-	#$(SSH) "cd /e/root/bash-minimal && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls --enable-minimal-config"
-	#$(SSH) "cd /e/root/bash && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
-	#-$(SSH) "shutdown"
-	#sleep 7
+	$(SSH) "source /etc/profile; mkdir /e/root/bash && cd /e/root/bash && /root/bash/$(CONFIGURE) --disable-nls"
+	$(SSH) "source /etc/profile; mkdir /e/root/bash-minimal && cd /e/root/bash-minimal && /root/bash-minimal/$(CONFIGURE) --disable-nls --enable-minimal-config --enable-alias --enable-strict-posix-default"
+	$(SSH) "source /etc/profile; mkdir /e/root/bison && cd /e/root/bison && /root/bison/$(CONFIGURE) --disable-nls"
+	$(SSH) "source /etc/profile; mkdir /e/root/gawk && cd /e/root/gawk && /root/gawk/$(CONFIGURE) --disable-nls"
+	$(SSH) "source /etc/profile; mkdir /e/root/grep && cd /e/root/grep && /root/grep/$(CONFIGURE) --disable-nls"
+	$(SSH) "source /etc/profile; mkdir /e/root/m4 && cd /e/root/m4 && /root/m4/$(CONFIGURE) --disable-nls"
+	$(SSH) "source /etc/profile; mkdir /e/root/make && cd /e/root/make && /root/make/$(CONFIGURE) --disable-nls"
+	$(SSH) "source /etc/profile; mkdir /e/root/sed && cd /e/root/sed && /root/sed/$(CONFIGURE) --disable-nls --disable-i18n"
+	-$(SSH) "shutdown"
+	sleep 7
+
 	# make && make install in a fastest possible way
+	$(ARANYM_JIT)
+	sleep 7
+	$(SSH) "source /etc/profile; cd /e/root/make && build.sh && strip -s make && cp make /bin && make install-strip DESTDIR=/e"
+	# fdlibm, mintbin, mintlib (mam to uz v /root) - ostatne cez cross cc
+	-$(SSH) "shutdown"
+
 	#$(ARANYM_JIT)
 	#sleep 7
 	#$(SSH) "cd /e/root/bash-minimal && make && make install-strip DESTDIR=/e"
@@ -42,27 +55,9 @@ default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) ar
 	#$(SSH) "mv /e/bin/bash /e/bin/sh && rm /bin/sh && cp /e/bin/sh /bin/sh"
 	#$(SSH) "cd /e/root/bash && make && make install-strip DESTDIR=/e"
 	#$(SSH) "rm /bin/bash && cp /e/bin/bash /bin/bash"
-	#-$(SSH) "shutdown"
-	#sleep 7
-
-	#$(ARANYM_MMU)
-	#sleep 7
-	#$(SSH) "cd /e/root/gawk && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
-	#$(SSH) "cd /e/root/grep && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
-	#$(SSH) "cd /e/root/sed && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls --disable-i18n"
-	#$(SSH) "cd /e/root/make && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
-	#-$(SSH) "shutdown"
-	#sleep 7
-
-	#$(ARANYM_JIT)
-	#sleep 7
 	#$(SSH) "cd /e/root/gawk && make && make install-strip DESTDIR=/e"
 	#$(SSH) "cd /e/root/grep && make && make install-strip DESTDIR=/e"
 	#$(SSH) "cd /e/root/sed && make && make install-strip DESTDIR=/e"
-	#$(SSH) "cd /e/root/make && make && make install-strip DESTDIR=/e"
-
-	# needs m4
-	#ssh root@192.168.251.2 "cd /e/root/bison && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
 
 	#cp -ra $(SOURCES_DIR)/coreutils $(TARGET_DRIVE)/root
 	#cp -ra $(SOURCES_DIR)/diffutils $(TARGET_DRIVE)/root
@@ -106,6 +101,10 @@ $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.open
 	cp -ra $(SOURCES_DIR)/make $(HOST_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/sed $(HOST_DRIVE)/root
 
+	# no clue what is this about but it doesn't work
+	rm $(HOST_DRIVE)/bin/awk
+	rm $(HOST_DRIVE)/usr/bin/awk
+	rm $(HOST_DRIVE)/usr/bin/gawk
 	mkdir -p $(HOST_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(HOST_DRIVE)/root/.ssh/authorized_keys
 	# it's a hostfs drive...
 	sed -i -e 's/^#StrictModes yes/StrictModes no/;' $(HOST_DRIVE)/etc/ssh/sshd_config
