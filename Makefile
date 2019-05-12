@@ -1,16 +1,13 @@
 SHELL		:= /bin/bash
 
-HOST_DRIVE	= drive_d
-TARGET_DRIVE	= drive_e
-FINAL_DRIVE	= drive_f
-
-HOST_IMAGE	= $(HOST_DRIVE).img
-HOST_IMAGE_SIZE	= 256
+BOOT_DRIVE	:= $(PWD)/drive_c
+HOST_DRIVE	:= $(PWD)/drive_d
+TARGET_DRIVE	:= $(PWD)/drive_e
 
 TARGET_IMAGE	= $(TARGET_DRIVE).img
-TARGET_IMAGE_SIZE = 1024
+TARGET_IMAGE_SIZE = 256
 
-FINAL_IMAGE	= $(FINAL_DRIVE).img
+FINAL_IMAGE	= drive_f.img
 FINAL_IMAGE_SIZE = 512
 
 CONFIG_DIR	:= $(PWD)/config
@@ -27,42 +24,42 @@ SSH		:= ssh root@192.168.251.2
 
 ###############################################################################
 
-default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config freemint/mint/1-19-cur/mint.cnf freemint/mint/bin/eth0-config.sh freemint/mint/bin/nfeth-config
-	$(ARANYM_MMU)
-	sleep 7
-	$(SSH) "cp -ra --no-preserve=ownership /g/$(TARGET_DRIVE)/* /e"
+default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) aranym.config
+	#$(ARANYM_MMU)
+	#sleep 7
+	#$(SSH) "cp -ra --no-preserve=ownership /g/$(TARGET_DRIVE)/* /e"
 
 	# ./configure in an MMU-enabled setup to avoid any nasty surprises
-	$(SSH) "cd /e/root/bash-minimal && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls --enable-minimal-config"
-	$(SSH) "cd /e/root/bash && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
-	-$(SSH) "shutdown"
-	sleep 7
+	#$(SSH) "cd /e/root/bash-minimal && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls --enable-minimal-config"
+	#$(SSH) "cd /e/root/bash && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
+	#-$(SSH) "shutdown"
+	#sleep 7
 	# make && make install in a fastest possible way
-	$(ARANYM_JIT)
-	sleep 7
-	$(SSH) "cd /e/root/bash-minimal && make && make install-strip DESTDIR=/e"
+	#$(ARANYM_JIT)
+	#sleep 7
+	#$(SSH) "cd /e/root/bash-minimal && make && make install-strip DESTDIR=/e"
 	# a bit hackish but this will ensure the safest ./configure environment for other packages
-	$(SSH) "mv /e/bin/bash /e/bin/sh && rm /bin/sh && cp /e/bin/sh /bin/sh"
-	$(SSH) "cd /e/root/bash && make && make install-strip DESTDIR=/e"
-	$(SSH) "rm /bin/bash && cp /e/bin/bash /bin/bash"
-	-$(SSH) "shutdown"
-	sleep 7
+	#$(SSH) "mv /e/bin/bash /e/bin/sh && rm /bin/sh && cp /e/bin/sh /bin/sh"
+	#$(SSH) "cd /e/root/bash && make && make install-strip DESTDIR=/e"
+	#$(SSH) "rm /bin/bash && cp /e/bin/bash /bin/bash"
+	#-$(SSH) "shutdown"
+	#sleep 7
 
-	$(ARANYM_MMU)
-	sleep 7
-	$(SSH) "cd /e/root/gawk && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
-	$(SSH) "cd /e/root/grep && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
-	$(SSH) "cd /e/root/sed && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls --disable-i18n"
-	$(SSH) "cd /e/root/make && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
-	-$(SSH) "shutdown"
-	sleep 7
+	#$(ARANYM_MMU)
+	#sleep 7
+	#$(SSH) "cd /e/root/gawk && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
+	#$(SSH) "cd /e/root/grep && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
+	#$(SSH) "cd /e/root/sed && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls --disable-i18n"
+	#$(SSH) "cd /e/root/make && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
+	#-$(SSH) "shutdown"
+	#sleep 7
 
-	$(ARANYM_JIT)
-	sleep 7
-	$(SSH) "cd /e/root/gawk && make && make install-strip DESTDIR=/e"
-	$(SSH) "cd /e/root/grep && make && make install-strip DESTDIR=/e"
-	$(SSH) "cd /e/root/sed && make && make install-strip DESTDIR=/e"
-	$(SSH) "cd /e/root/make && make && make install-strip DESTDIR=/e"
+	#$(ARANYM_JIT)
+	#sleep 7
+	#$(SSH) "cd /e/root/gawk && make && make install-strip DESTDIR=/e"
+	#$(SSH) "cd /e/root/grep && make && make install-strip DESTDIR=/e"
+	#$(SSH) "cd /e/root/sed && make && make install-strip DESTDIR=/e"
+	#$(SSH) "cd /e/root/make && make && make install-strip DESTDIR=/e"
 
 	# needs m4
 	#ssh root@192.168.251.2 "cd /e/root/bison && $(CONFIGURE) --prefix=/usr --disable-nls && make && make install DESTDIR=/e"
@@ -80,48 +77,38 @@ configure:
 .PHONY: build
 build:
 
-freemint/mint/1-19-cur/mint.cnf: $(CONFIG_DIR)/mint.cnf
-	cp $< $@
-
-freemint/mint/bin/eth0-config.sh: $(TOOLS_DIR)/eth0-config.sh
-	mkdir -p freemint/mint/bin
-	cp $< $@
-freemint/mint/bin/nfeth-config: $(TOOLS_DIR)/nfeth-config
-	mkdir -p freemint/mint/bin
-	cp $< $@
-
 aranym.config:
 	# unfortunately, ARAnyM can't have config in a subfolder
 	cp $(CONFIG_DIR)/aranym.config .
 
-$(HOST_IMAGE): $(HOST_DRIVE)/.done
-	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) --squash $@
-
-$(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/.done mintbin/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done gawk/.done grep/.done diffutils/.done make/.done bison/.done m4/.done
+$(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.openssh.done \
+		binutils/.done gcc/.done $(HOST_DRIVE)/.mintbin.done $(HOST_DRIVE)/.mintlib.done $(HOST_DRIVE)/.fdlibm.done \
+		$(HOST_DRIVE)/.fileutils.done $(HOST_DRIVE)/.sh-utils.done $(HOST_DRIVE)/.textutils.done $(HOST_DRIVE)/.sed.done $(HOST_DRIVE)/.gawk.done \
+		$(HOST_DRIVE)/.grep.done $(HOST_DRIVE)/.diffutils.done $(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.m4.done $(HOST_DRIVE)/.hostname.done \
+		$(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/bison/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/gawk/.done \
+		$(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/m4/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/sed/.done
 	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
 
 	cp -ra $(CONFIG_DIR)/{etc,var} $(HOST_DRIVE)
 
-	cp -ra bash/* $(HOST_DRIVE)
 	cp -ra oldstuff/* $(HOST_DRIVE)
-	cp -ra openssh/* $(HOST_DRIVE)
 	cp -ra binutils/* $(HOST_DRIVE)
 	cp -ra gcc/* $(HOST_DRIVE)
-	cp -ra mintbin/* $(HOST_DRIVE)
-	cp -ra mintlib/* $(HOST_DRIVE)
-	cp -ra fdlibm/* $(HOST_DRIVE)
-	cp -ra coreutils/* $(HOST_DRIVE)
-	cp -ra sed/* $(HOST_DRIVE)
-	cp -ra gawk/* $(HOST_DRIVE)
-	cp -ra grep/* $(HOST_DRIVE)
-	cp -ra diffutils/* $(HOST_DRIVE)
-	cp -ra make/* $(HOST_DRIVE)
-	cp -ra bison/* $(HOST_DRIVE)
-	cp -ra m4/* $(HOST_DRIVE)
 
-	ln -s bash $(HOST_DRIVE)/bin/sh
+	cp -ra $(SOURCES_DIR)/bash $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/bash $(HOST_DRIVE)/root/bash-minimal
+	cp -ra $(SOURCES_DIR)/bison $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/coreutils $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/diffutils $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/gawk $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/grep $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/m4 $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/make $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/sed $(HOST_DRIVE)/root
 
 	mkdir -p $(HOST_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(HOST_DRIVE)/root/.ssh/authorized_keys
+	# it's a hostfs drive...
+	sed -i -e 's/^#StrictModes yes/StrictModes no/;' $(HOST_DRIVE)/etc/ssh/sshd_config
 
 	touch $@
 
@@ -132,7 +119,7 @@ $(TARGET_IMAGE): $(TARGET_DRIVE)/.done
 	dd if=/dev/zero of=$@ bs=1M count=$(TARGET_IMAGE_SIZE)
 	mkfs.ext2 $@
 
-$(TARGET_DRIVE)/.done: binutils/.done gcc/.done oldstuff/.done $(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/bison/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/fdlibm/.done $(SOURCES_DIR)/gawk/.done $(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/m4/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/mintbin/.done $(SOURCES_DIR)/mintlib/.done $(SOURCES_DIR)/sed/.done
+$(TARGET_DRIVE)/.done: binutils/.done gcc/.done oldstuff/.done $(SOURCES_DIR)/fdlibm/.done $(SOURCES_DIR)/mintbin/.done $(SOURCES_DIR)/mintlib/.done
 
 	mkdir -p $(TARGET_DRIVE)
 	mkdir -p $(TARGET_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
@@ -142,19 +129,9 @@ $(TARGET_DRIVE)/.done: binutils/.done gcc/.done oldstuff/.done $(SOURCES_DIR)/ba
 	cp -ra gcc/* $(TARGET_DRIVE)
 	cp -ra oldstuff/* $(TARGET_DRIVE)
 
-	cp -ra $(SOURCES_DIR)/bash $(TARGET_DRIVE)/root
-	cp -ra $(SOURCES_DIR)/bash $(TARGET_DRIVE)/root/bash-minimal
-	cp -ra $(SOURCES_DIR)/bison $(TARGET_DRIVE)/root
-	cp -ra $(SOURCES_DIR)/coreutils $(TARGET_DRIVE)/root
-	cp -ra $(SOURCES_DIR)/diffutils $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/fdlibm $(TARGET_DRIVE)/root
-	cp -ra $(SOURCES_DIR)/gawk $(TARGET_DRIVE)/root
-	cp -ra $(SOURCES_DIR)/grep $(TARGET_DRIVE)/root
-	cp -ra $(SOURCES_DIR)/m4 $(TARGET_DRIVE)/root
-	cp -ra $(SOURCES_DIR)/make $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/mintbin $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/mintlib $(TARGET_DRIVE)/root
-	cp -ra $(SOURCES_DIR)/sed $(TARGET_DRIVE)/root
 
 	mkdir -p $(TARGET_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(TARGET_DRIVE)/root/.ssh/authorized_keys
 
@@ -167,17 +144,23 @@ emutos/.done: $(DOWNLOADS_DIR)/emutos.zip
 	mv emutos-aranym-* "emutos"
 	touch $@
 
-freemint/.done: $(DOWNLOADS_DIR)/freemint.zip
-	unzip -q $< -d "freemint"
+$(BOOT_DRIVE)/.done: $(DOWNLOADS_DIR)/freemint.zip $(CONFIG_DIR)/mint.cnf $(TOOLS_DIR)/eth0-config.sh $(TOOLS_DIR)/nfeth-config
+	unzip -q $< -d $(BOOT_DRIVE)
+	cp $(CONFIG_DIR)/mint.cnf $(BOOT_DRIVE)/mint/1-19-cur
+	mkdir -p $(BOOT_DRIVE)/mint/bin
+	cp $(TOOLS_DIR)/eth0-config.sh $(BOOT_DRIVE)/mint/bin
+	cp $(TOOLS_DIR)/nfeth-config $(BOOT_DRIVE)/mint/bin
 	touch $@
 
 ###############################################################################
 
-bash/.done: $(DOWNLOADS_DIR)/bash.tar.bz2
-	mkdir "bash" && tar xjf $< -C "bash"
+$(HOST_DRIVE)/.bash.done: $(DOWNLOADS_DIR)/bash.rpm
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && rpmextract.sh $<
 	touch $@
 
 oldstuff/.done: $(DOWNLOADS_DIR)/oldstuff.rpm
+	mkdir -p $(HOST_DRIVE)
 	mkdir "oldstuff" && cd "oldstuff" && rpmextract.sh $<
 	#\
 	#if [ $(shell which rpm2cpio) ]; \
@@ -188,8 +171,9 @@ oldstuff/.done: $(DOWNLOADS_DIR)/oldstuff.rpm
 	#fi
 	touch $@
 
-openssh/.done: $(DOWNLOADS_DIR)/openssh.tar.bz2
-	mkdir "openssh" && tar xjf $< -C "openssh"
+$(HOST_DRIVE)/.openssh.done: $(DOWNLOADS_DIR)/openssh.tar.bz2
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && tar xjf $<
 	touch $@
 
 binutils/.done: $(DOWNLOADS_DIR)/binutils.tar.bz2
@@ -200,14 +184,14 @@ gcc/.done: $(DOWNLOADS_DIR)/gcc.tar.bz2
 	mkdir "gcc" && tar xjf $< -C "gcc"
 	touch $@
 
-mintbin/.done: $(DOWNLOADS_DIR)/mintbin.tar.bz2
-	mkdir "mintbin" && tar xjf $< -C "mintbin"
+$(HOST_DRIVE)/.mintbin.done: $(DOWNLOADS_DIR)/mintbin.tar.bz2
+	cd $(HOST_DRIVE) && tar xjf $<
 	touch $@
 
-mintlib/.done: mintlib-src/.done
+$(HOST_DRIVE)/.mintlib.done: mintlib-src/.done
 	cd "mintlib-src" && \
 	make SHELL=/bin/bash CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="/usr" && \
-	make SHELL=/bin/bash CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="/usr" install DESTDIR=$(PWD)/mintlib
+	make SHELL=/bin/bash CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="/usr" install DESTDIR=$(HOST_DRIVE)
 	touch $@
 
 mintlib-src/.done: $(DOWNLOADS_DIR)/mintlib-src.tar.gz
@@ -215,12 +199,12 @@ mintlib-src/.done: $(DOWNLOADS_DIR)/mintlib-src.tar.gz
 	mv mintlib-master "mintlib-src"
 	touch $@
 
-fdlibm/.done: fdlibm-src/.done
+$(HOST_DRIVE)/.fdlibm.done: fdlibm-src/.done
 	cd "fdlibm-src" && \
 	./configure --host=m68k-atari-mint --prefix="/usr" && \
 	make CPU-FPU-TYPES=68020-60.68881 && \
-	make CPU-FPU-TYPES=68020-60.68881 install DESTDIR=$(PWD)/fdlibm
-	mv fdlibm/usr/lib/m68020-60/* fdlibm/usr/lib && rmdir fdlibm/usr/lib/m68020-60
+	make CPU-FPU-TYPES=68020-60.68881 install DESTDIR=$(HOST_DRIVE)
+	mv $(HOST_DRIVE)/usr/lib/m68020-60/* $(HOST_DRIVE)/usr/lib && rmdir $(HOST_DRIVE)/usr/lib/m68020-60
 	touch $@
 
 fdlibm-src/.done: $(DOWNLOADS_DIR)/fdlibm-src.tar.gz
@@ -228,37 +212,52 @@ fdlibm-src/.done: $(DOWNLOADS_DIR)/fdlibm-src.tar.gz
 	mv fdlibm-master "fdlibm-src"
 	touch $@
 
-coreutils/.done: $(DOWNLOADS_DIR)/coreutils.tar.bz2
-	mkdir "coreutils" && tar xjf $< -C "coreutils"
+$(HOST_DRIVE)/.fileutils.done: $(DOWNLOADS_DIR)/fileutils.rpm
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && rpmextract.sh $<
+	touch $@
+$(HOST_DRIVE)/.sh-utils.done: $(DOWNLOADS_DIR)/sh-utils.rpm
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && rpmextract.sh $<
+	touch $@
+$(HOST_DRIVE)/.textutils.done: $(DOWNLOADS_DIR)/textutils.rpm
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && rpmextract.sh $<
 	touch $@
 
-sed/.done: $(DOWNLOADS_DIR)/sed.tar.bz2
-	mkdir "sed" && tar xjf $< -C "sed"
+$(HOST_DRIVE)/.sed.done: $(DOWNLOADS_DIR)/sed.rpm
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && rpmextract.sh $<
 	touch $@
 
-gawk/.done: $(DOWNLOADS_DIR)/gawk.tar.bz2
-	mkdir "gawk" && tar xjf $< -C "gawk"
+$(HOST_DRIVE)/.gawk.done: $(DOWNLOADS_DIR)/gawk.rpm
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && rpmextract.sh $<
 	touch $@
 
-grep/.done: $(DOWNLOADS_DIR)/grep.tar.bz2
-	mkdir "grep" && tar xjf $< -C "grep"
+$(HOST_DRIVE)/.grep.done: $(DOWNLOADS_DIR)/grep.rpm
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && rpmextract.sh $<
 	touch $@
 
-diffutils/.done: $(DOWNLOADS_DIR)/diffutils.tar.bz2
-	mkdir "diffutils" && tar xjf $< -C "diffutils"
+$(HOST_DRIVE)/.diffutils.done: $(DOWNLOADS_DIR)/diffutils.rpm
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && rpmextract.sh $<
 	touch $@
 
-make/.done: $(DOWNLOADS_DIR)/make.tar.bz2
-	mkdir "make" && tar xjf $< -C "make"
+$(HOST_DRIVE)/.bison.done: $(DOWNLOADS_DIR)/bison.rpm
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && rpmextract.sh $<
 	touch $@
 
-bison/.done: $(DOWNLOADS_DIR)/bison.rpm
-	#mkdir "bison" && tar xjf $< -C "bison"
-	mkdir "bison" && cd "bison" && rpmextract.sh $<
+$(HOST_DRIVE)/.m4.done: $(DOWNLOADS_DIR)/m4.rpm
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && rpmextract.sh $<
 	touch $@
 
-m4/.done: $(DOWNLOADS_DIR)/m4.rpm
-	mkdir "m4" && cd "m4" && rpmextract.sh $<
+$(HOST_DRIVE)/.hostname.done: $(DOWNLOADS_DIR)/hostname.rpm
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && rpmextract.sh $<
 	touch $@
 
 ###############################################################################
@@ -323,9 +322,9 @@ $(DOWNLOADS_DIR)/freemint.zip:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "https://bintray.com/freemint/freemint/download_file?file_path=snapshots-cpu%2F1-19-a3af9bdb%2Ffreemint-1-19-cur-040.zip"
 
-$(DOWNLOADS_DIR)/bash.tar.bz2:
+$(DOWNLOADS_DIR)/bash.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/bash/bash-4.4.12-bin-mint020-20170617.tar.bz2"
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/mint/packages/bash-2.05a-4.m68kmint.rpm"
 
 $(DOWNLOADS_DIR)/oldstuff.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
@@ -355,33 +354,32 @@ $(DOWNLOADS_DIR)/fdlibm-src.tar.gz:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "https://github.com/freemint/fdlibm/archive/master.tar.gz"
 
-$(DOWNLOADS_DIR)/coreutils.tar.bz2:
+# coreutils
+$(DOWNLOADS_DIR)/fileutils.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/coreutils/coreutils-8.21-mint-20131205-bin-mint020-20131219.tar.bz2"
-
-$(DOWNLOADS_DIR)/sed.tar.bz2:
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/fileutils-4.1-2.m68kmint.rpm"
+$(DOWNLOADS_DIR)/sh-utils.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/sed/sed-4.2.2-bin-mint020-20131119.tar.bz2"
-
-$(DOWNLOADS_DIR)/gawk.tar.bz2:
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/sh-utils-2.0.11-1.m68kmint.rpm"
+$(DOWNLOADS_DIR)/textutils.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/gawk/gawk-4.1.0-bin-mint020-20131120.tar.bz2"
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/textutils-2.0.11-2.m68kmint.rpm"
 
-$(DOWNLOADS_DIR)/grep.tar.bz2:
+$(DOWNLOADS_DIR)/sed.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/grep/grep-2.15-bin-mint020-20131117.tar.bz2"
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/sed-4.2.1-1.m68kmint.rpm"
 
-$(DOWNLOADS_DIR)/diffutils.tar.bz2:
+$(DOWNLOADS_DIR)/gawk.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/diffutils/diffutils-3.3-bin-mint020-20131120.tar.bz2"
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/gawk-3.0.6-1.m68kmint.rpm"
 
-$(DOWNLOADS_DIR)/make.tar.bz2:
+$(DOWNLOADS_DIR)/grep.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/make/make-4.0-bin-mint020-20131109.tar.bz2"
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/grep-2.4.2-1.m68kmint.rpm"
 
-#$(DOWNLOADS_DIR)/bison.tar.bz2:
-#	mkdir -p $(DOWNLOADS_DIR)
-#	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/bison/bison-3.0.1-bin-mint020-20131121.tar.bz2"
+$(DOWNLOADS_DIR)/diffutils.rpm:
+	mkdir -p $(DOWNLOADS_DIR)
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/diffutils-2.7-2.m68kmint.rpm"
 
 $(DOWNLOADS_DIR)/bison.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
@@ -390,6 +388,10 @@ $(DOWNLOADS_DIR)/bison.rpm:
 $(DOWNLOADS_DIR)/m4.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/m4-1.4.15-1.m68kmint.rpm"
+
+$(DOWNLOADS_DIR)/hostname.rpm:
+	mkdir -p $(DOWNLOADS_DIR)
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/hostname-2.07-1.m68kmint.rpm"
 
 ###############################################################################
 
@@ -445,16 +447,15 @@ $(SOURCES_DIR)/sed.tar.xz:
 
 .PHONY: driveclean
 driveclean:
-	rm -f $(HOST_IMAGE) $(TARGET_IMAGE) $(FINAL_IMAGE)
-	rm -rf $(HOST_DRIVE) $(TARGET_DRIVE) $(FINAL_DRIVE)
+	rm -f $(TARGET_IMAGE) $(FINAL_IMAGE)
+	rm -rf $(BOOT_DRIVE) $(HOST_DRIVE) $(TARGET_DRIVE)
 
 .PHONY: clean
 clean: driveclean
 	rm -f *~
 	rm -f aranym.config
-	rm -rf emutos freemint bash oldstuff openssh binutils gcc mintbin
-	rm -rf mintlib-src mintlib fdlibm-src fdlibm
-	rm -rf coreutils sed gawk grep diffutils make bison m4
+	rm -rf emutos oldstuff binutils gcc
+	rm -rf mintlib-src fdlibm-src
 	rm -rf $(SOURCES_DIR)/{bash,bison,coreutils,diffutils,fdlibm,gawk,grep,m4,make,mintbin,mintlib,sed}
 
 .PHONY: distclean
