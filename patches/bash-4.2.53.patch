@@ -1,0 +1,91 @@
+diff --git a/expr.c b/expr.c
+index 98d75b6..1281392 100644
+--- a/expr.c
++++ b/expr.c
+@@ -326,7 +326,11 @@ expr_bind_array_element (tok, ind, rhs)
+   char ibuf[INT_STRLEN_BOUND (arrayind_t) + 1], *istr;
+
+   istr = fmtumax (ind, 10, ibuf, sizeof (ibuf), 0);
++#if defined (ARRAY_VARS)
+   vname = array_variable_name (tok, (char **)NULL, (int *)NULL);
++#else
++  vname = tok;
++#endif
+
+   llen = strlen (vname) + sizeof (ibuf) + 3;
+   lhs = xmalloc (llen);
+@@ -1048,8 +1052,8 @@ expr_streval (tok, e, lvalue)
+ 	jump_to_top_level (FORCE_EOF);
+     }
+
+-  ind = -1;
+ #if defined (ARRAY_VARS)
++  ind = -1;
+   /* Second argument of 0 to get_array_value means that we don't allow
+      references like array[@].  In this case, get_array_value is just
+      like get_variable_value in that it does not return newly-allocated
+@@ -1066,7 +1070,9 @@ expr_streval (tok, e, lvalue)
+       lvalue->tokstr = tok;	/* XXX */
+       lvalue->tokval = tval;
+       lvalue->tokvar = v;	/* XXX */
++#if defined (ARRAY_VARS)
+       lvalue->ind = ind;
++#endif
+     }
+
+   return (tval);
+diff --git a/subst.c b/subst.c
+index 75f31da..381d1fc 100644
+--- a/subst.c
++++ b/subst.c
+@@ -7230,7 +7230,11 @@ parameter_brace_expand (string, indexp, quoted, pflags, quoted_dollar_atp, conta
+   /* If this is a substring spec, process it and add the result. */
+   if (want_substring)
+     {
++#if defined (ARRAY_VARS)
+       temp1 = parameter_brace_substring (name, temp, ind, value, quoted, (tflag & W_ARRAYIND) ? AV_USEIND : 0);
++#else
++	  temp1 = parameter_brace_substring (name, temp, ind, value, quoted, 0);
++#endif
+       FREE (name);
+       FREE (value);
+       FREE (temp);
+@@ -7254,7 +7258,11 @@ parameter_brace_expand (string, indexp, quoted, pflags, quoted_dollar_atp, conta
+     }
+   else if (want_patsub)
+     {
++#if defined (ARRAY_VARS)
+       temp1 = parameter_brace_patsub (name, temp, ind, value, quoted, (tflag & W_ARRAYIND) ? AV_USEIND : 0);
++#else
++      temp1 = parameter_brace_patsub (name, temp, ind, value, quoted, 0);
++#endif
+       FREE (name);
+       FREE (value);
+       FREE (temp);
+@@ -7316,7 +7324,11 @@ parameter_brace_expand (string, indexp, quoted, pflags, quoted_dollar_atp, conta
+ 	  FREE (value);
+ 	  break;
+ 	}
++#if defined (ARRAY_VARS)
+       temp1 = parameter_brace_remove_pattern (name, temp, ind, value, c, quoted, (tflag & W_ARRAYIND) ? AV_USEIND : 0);
++#else
++      temp1 = parameter_brace_remove_pattern (name, temp, ind, value, c, quoted, 0);
++#endif
+       free (temp);
+       free (value);
+       free (name);
+diff --git a/variables.c b/variables.c
+index e9730f0..b352eb7 100644
+--- a/variables.c
++++ b/variables.c
+@@ -167,6 +167,10 @@ static int winsize_assignment;		/* currently assigning to LINES or COLUMNS */
+ #endif
+
+ /* Some forward declarations. */
++#if defined (HAVE_TZSET)
++void sv_tz (char *);
++#endif
++
+ static void create_variable_tables __P((void));
+
+ static void set_machine_vars __P((void));

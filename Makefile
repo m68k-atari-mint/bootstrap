@@ -20,7 +20,7 @@ PATCHES_DIR	:= $(PWD)/patches
 SOURCES_DIR	:= $(PWD)/sources
 
 WGET		:= wget -q --no-check-certificate -O
-CONFIGURE	:= source /etc/profile; ./configure CFLAGS='-O2 -fomit-frame-pointer -I/usr/local/include' LDFLAGS='-L/usr/local/lib'
+CONFIGURE	:= source /etc/profile; ./configure CFLAGS='-O2 -fomit-frame-pointer -I/usr/local/include' LDFLAGS='-L/usr/local/lib' --config-cache
 ARANYM_JIT	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-jit -c aranym.config 2> /dev/null &
 ARANYM_MMU	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null &
 SSH		:= ssh root@192.168.251.2
@@ -28,15 +28,11 @@ SSH		:= ssh root@192.168.251.2
 ###############################################################################
 
 default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config freemint/mint/1-19-cur/mint.cnf freemint/mint/bin/eth0-config.sh freemint/mint/bin/nfeth-config
-	$(ARANYM_JIT)
-	sleep 7
-	$(SSH) "cp -ra --no-preserve=ownership /g/$(TARGET_DRIVE)/* /e"
-	-$(SSH) "shutdown"
-	sleep 7
-
-	# ./configure in an MMU-enabled setup to avoid any nasty surprises
 	$(ARANYM_MMU)
 	sleep 7
+	$(SSH) "cp -ra --no-preserve=ownership /g/$(TARGET_DRIVE)/* /e"
+
+	# ./configure in an MMU-enabled setup to avoid any nasty surprises
 	$(SSH) "cd /e/root/bash-minimal && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls --enable-minimal-config"
 	$(SSH) "cd /e/root/bash && $(CONFIGURE) --prefix=/usr --exec-prefix=/ --disable-nls"
 	-$(SSH) "shutdown"
@@ -46,12 +42,8 @@ default: emutos/.done freemint/.done $(HOST_IMAGE) $(TARGET_IMAGE) aranym.config
 	sleep 7
 	$(SSH) "cd /e/root/bash-minimal && make && make install-strip DESTDIR=/e"
 	# a bit hackish but this will ensure the safest ./configure environment for other packages
-	# don't enable it by default - there seems to be some regression (/bin/sh-2.05 seems to work)
-	#$(SSH) "mv /e/bin/bash /e/bin/sh && rm /bin/sh && cp /e/bin/sh /bin/sh"
-	$(SSH) "mv /e/bin/bash /e/bin/sh-4.4.23"
+	$(SSH) "mv /e/bin/bash /e/bin/sh && rm /bin/sh && cp /e/bin/sh /bin/sh"
 	$(SSH) "cd /e/root/bash && make && make install-strip DESTDIR=/e"
-	# /bin/sh is still needed, supply with /bin/bash for now
-	$(SSH) "rm /bin/sh && cp /e/bin/bash /bin/sh"
 	$(SSH) "rm /bin/bash && cp /e/bin/bash /bin/bash"
 	-$(SSH) "shutdown"
 	sleep 7
@@ -267,7 +259,8 @@ bison/.done: $(DOWNLOADS_DIR)/bison.tar.bz2
 
 $(SOURCES_DIR)/bash/.done: $(SOURCES_DIR)/bash.tar.gz
 	cd $(SOURCES_DIR) && tar xzf $< && mv bash-* "bash"
-	cd $(SOURCES_DIR)/bash && cat $(PATCHES_DIR)/bash-4.4-patches/* | patch -p0
+	cd $(SOURCES_DIR)/bash && cat $(PATCHES_DIR)/bash-4.2-patches/* | patch -p0
+	cd $(SOURCES_DIR)/bash && cat $(PATCHES_DIR)/bash-4.2.53.patch | patch -p1
 	touch $@
 
 $(SOURCES_DIR)/bison/.done: $(SOURCES_DIR)/bison.tar.xz
@@ -388,7 +381,7 @@ $(DOWNLOADS_DIR)/bison.tar.bz2:
 
 $(SOURCES_DIR)/bash.tar.gz:
 	mkdir -p $(SOURCES_DIR)
-	$(WGET) $@ "https://ftp.gnu.org/gnu/bash/bash-4.4.tar.gz"
+	$(WGET) $@ "https://ftp.gnu.org/gnu/bash/bash-4.2.tar.gz"
 
 $(SOURCES_DIR)/bison.tar.xz:
 	mkdir -p $(SOURCES_DIR)
