@@ -97,7 +97,7 @@ aranym.config:
 $(HOST_IMAGE): $(HOST_DRIVE)/.done
 	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) --squash $@
 
-$(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/.done mintbin/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done gawk/.done grep/.done diffutils/.done make/.done bison/.done
+$(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/.done mintbin/.done mintlib/.done fdlibm/.done coreutils/.done sed/.done gawk/.done grep/.done diffutils/.done make/.done bison/.done m4/.done
 	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
 
 	cp -ra $(CONFIG_DIR)/{etc,var} $(HOST_DRIVE)
@@ -117,6 +117,7 @@ $(HOST_DRIVE)/.done: bash/.done oldstuff/.done openssh/.done binutils/.done gcc/
 	cp -ra diffutils/* $(HOST_DRIVE)
 	cp -ra make/* $(HOST_DRIVE)
 	cp -ra bison/* $(HOST_DRIVE)
+	cp -ra m4/* $(HOST_DRIVE)
 
 	ln -s bash $(HOST_DRIVE)/bin/sh
 
@@ -251,8 +252,13 @@ make/.done: $(DOWNLOADS_DIR)/make.tar.bz2
 	mkdir "make" && tar xjf $< -C "make"
 	touch $@
 
-bison/.done: $(DOWNLOADS_DIR)/bison.tar.bz2
-	mkdir "bison" && tar xjf $< -C "bison"
+bison/.done: $(DOWNLOADS_DIR)/bison.rpm
+	#mkdir "bison" && tar xjf $< -C "bison"
+	mkdir "bison" && cd "bison" && rpmextract.sh $<
+	touch $@
+
+m4/.done: $(DOWNLOADS_DIR)/m4.rpm
+	mkdir "m4" && cd "m4" && rpmextract.sh $<
 	touch $@
 
 ###############################################################################
@@ -373,9 +379,17 @@ $(DOWNLOADS_DIR)/make.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/make/make-4.0-bin-mint020-20131109.tar.bz2"
 
-$(DOWNLOADS_DIR)/bison.tar.bz2:
+#$(DOWNLOADS_DIR)/bison.tar.bz2:
+#	mkdir -p $(DOWNLOADS_DIR)
+#	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/bison/bison-3.0.1-bin-mint020-20131121.tar.bz2"
+
+$(DOWNLOADS_DIR)/bison.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/bison/bison-3.0.1-bin-mint020-20131121.tar.bz2"
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/bison-1.875-2.m68kmint.rpm"
+
+$(DOWNLOADS_DIR)/m4.rpm:
+	mkdir -p $(DOWNLOADS_DIR)
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/m4-1.4.15-1.m68kmint.rpm"
 
 ###############################################################################
 
@@ -440,7 +454,7 @@ clean: driveclean
 	rm -f aranym.config
 	rm -rf emutos freemint bash oldstuff openssh binutils gcc mintbin
 	rm -rf mintlib-src mintlib fdlibm-src fdlibm
-	rm -rf coreutils sed gawk grep diffutils make bison
+	rm -rf coreutils sed gawk grep diffutils make bison m4
 	rm -rf $(SOURCES_DIR)/{bash,bison,coreutils,diffutils,fdlibm,gawk,grep,m4,make,mintbin,mintlib,sed}
 
 .PHONY: distclean
