@@ -29,24 +29,36 @@ default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) ar
 	sleep 7
 	$(SSH) "cp -ra /h/drive_e/* /e && chown -R root:root /e && chmod 700 /e/root/.ssh && chmod 600 /e/root/.ssh/authorized_keys"
 
+	$(SSH) "source /etc/profile; mkdir /e/root/make && cd /e/root/make && /root/make/$(CONFIGURE) --disable-nls"
+	# we need m4 for bison installed, SpareMiNT build is too old :-(
+	$(SSH) "source /etc/profile; mkdir /e/root/m4 && cd /e/root/m4 && /root/m4/$(CONFIGURE)"
+	-$(SSH) "shutdown"
+	# TODO: compile on host
+	sleep 7
+	$(ARANYM_JIT)
+	sleep 7
+	$(SSH) "source /etc/profile; cd /e/root/make && ./build.sh && strip -s ./make && ./make install-strip DESTDIR=/e"
+	$(SSH) "source /etc/profile; cd /e/root/m4 && make && make install-strip DESTDIR=/e"
+	-$(SSH) "shutdown"
+	sleep 7
+
 	# ./configure in an MMU-enabled setup to avoid any nasty surprises
+	$(ARANYM_MMU)
+	sleep 7
 	$(SSH) "source /etc/profile; mkdir /e/root/bash && cd /e/root/bash && /root/bash/$(CONFIGURE) --disable-nls"
 	$(SSH) "source /etc/profile; mkdir /e/root/bash-minimal && cd /e/root/bash-minimal && /root/bash-minimal/$(CONFIGURE) --disable-nls --enable-minimal-config --enable-alias --enable-strict-posix-default"
 	$(SSH) "source /etc/profile; mkdir /e/root/bison && cd /e/root/bison && /root/bison/$(CONFIGURE) --disable-nls"
 	$(SSH) "source /etc/profile; mkdir /e/root/gawk && cd /e/root/gawk && /root/gawk/$(CONFIGURE) --disable-nls"
 	$(SSH) "source /etc/profile; mkdir /e/root/grep && cd /e/root/grep && /root/grep/$(CONFIGURE) --disable-nls"
-	$(SSH) "source /etc/profile; mkdir /e/root/m4 && cd /e/root/m4 && /root/m4/$(CONFIGURE) --disable-nls"
-	$(SSH) "source /etc/profile; mkdir /e/root/make && cd /e/root/make && /root/make/$(CONFIGURE) --disable-nls"
 	$(SSH) "source /etc/profile; mkdir /e/root/sed && cd /e/root/sed && /root/sed/$(CONFIGURE) --disable-nls --disable-i18n"
 	-$(SSH) "shutdown"
 	sleep 7
 
 	# make && make install in a fastest possible way
-	$(ARANYM_JIT)
-	sleep 7
-	$(SSH) "source /etc/profile; cd /e/root/make && build.sh && strip -s make && cp make /bin && make install-strip DESTDIR=/e"
+	#$(ARANYM_JIT)
+	#sleep 7
 	# fdlibm, mintbin, mintlib (mam to uz v /root) - ostatne cez cross cc
-	-$(SSH) "shutdown"
+	#-$(SSH) "shutdown"
 
 	#$(ARANYM_JIT)
 	#sleep 7
@@ -79,7 +91,7 @@ aranym.config:
 $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.openssh.done \
 		binutils/.done gcc/.done $(HOST_DRIVE)/.mintbin.done $(HOST_DRIVE)/.mintlib.done $(HOST_DRIVE)/.fdlibm.done \
 		$(HOST_DRIVE)/.fileutils.done $(HOST_DRIVE)/.sh-utils.done $(HOST_DRIVE)/.textutils.done $(HOST_DRIVE)/.sed.done $(HOST_DRIVE)/.gawk.done \
-		$(HOST_DRIVE)/.grep.done $(HOST_DRIVE)/.diffutils.done $(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.m4.done $(HOST_DRIVE)/.hostname.done \
+		$(HOST_DRIVE)/.grep.done $(HOST_DRIVE)/.diffutils.done $(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.perl.done $(HOST_DRIVE)/.hostname.done \
 		$(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/bison/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/gawk/.done \
 		$(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/m4/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/sed/.done
 	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
@@ -103,6 +115,7 @@ $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.open
 
 	# no clue what is this about but it doesn't work
 	rm $(HOST_DRIVE)/bin/awk
+	ln -s gawk $(HOST_DRIVE)/bin/awk
 	rm $(HOST_DRIVE)/usr/bin/awk
 	rm $(HOST_DRIVE)/usr/bin/gawk
 	mkdir -p $(HOST_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(HOST_DRIVE)/root/.ssh/authorized_keys
@@ -249,7 +262,7 @@ $(HOST_DRIVE)/.bison.done: $(DOWNLOADS_DIR)/bison.rpm
 	cd $(HOST_DRIVE) && rpmextract.sh $<
 	touch $@
 
-$(HOST_DRIVE)/.m4.done: $(DOWNLOADS_DIR)/m4.rpm
+$(HOST_DRIVE)/.perl.done: $(DOWNLOADS_DIR)/perl.rpm
 	mkdir -p $(HOST_DRIVE)
 	cd $(HOST_DRIVE) && rpmextract.sh $<
 	touch $@
@@ -384,9 +397,9 @@ $(DOWNLOADS_DIR)/bison.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/bison-1.875-2.m68kmint.rpm"
 
-$(DOWNLOADS_DIR)/m4.rpm:
+$(DOWNLOADS_DIR)/perl.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/m4-1.4.15-1.m68kmint.rpm"
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/perl-5.6.0-3.m68kmint.rpm"
 
 $(DOWNLOADS_DIR)/hostname.rpm:
 	mkdir -p $(DOWNLOADS_DIR)

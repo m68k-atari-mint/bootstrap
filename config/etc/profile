@@ -11,6 +11,10 @@ prependpath () {
 
 prependpath '/usr/local/sbin'
 prependpath '/usr/local/bin'
+prependpath '/e/usr/sbin'
+prependpath '/e/usr/bin'
+prependpath '/e/sbin'
+prependpath '/e/bin'
 unset prependpath
 
 export PATH
