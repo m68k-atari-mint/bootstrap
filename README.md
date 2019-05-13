@@ -1,7 +1,7 @@
 Bootstrap plan:
 - we need to create three drives:
-	1. Cross compiled binaries (to compile sources natively)
-	2. Natively compiled binaries (to compile sources for the final image)
+	1. Cross compiled binaries (hostfs drive with essential tools for running ./configure scripts)
+	2. Natively compiled binaries (ext2fs image for packages which need to be ./configure'd and/or install'ed natively)
 	3. Final image with only bash, openssh and opkg
 - install to the boot drive:
 	- emutos
@@ -24,30 +24,28 @@ Bootstrap plan:
 	- openssh (Vincent Riviere's build)
 	- perl (SpareMiNT)
 	- sed (SpareMiNT)
-- ssh to the cross image, build and install to the native image (also create an .ipk for each of them):
+- ssh to the host drive, ./configure and/or build on the native image, install to the final image
 	- bash
-	- binutils (just copy over for now)
-	- bison
+	- zlib
+	- openssl
+	- openssh
+	- libarchive
+	- opkg
+- ssh to the host drive, ./configure and/or build on the native image, create essential packages:
+	- bison (needs new m4 installed)
 	- coreutils
 	- diffutils
 	- fdlibm
 	- gawk
-	- gcc (just copy over for now)
 	- grep
 	- inetutils
 	- m4
 	- make
 	- mintbin
 	- mintlib
-	- oldstuff (just copy over for now)
-	- perl (just copy over for now)
 	- sed
 - (later...):
-	- zlib
-	- openssl
-	- openssh
-	- libarchive
-	- opkg
-	- (auto tools but this shouldn't be needed when ./configure is available)
-	- (binutils)
-	- (gcc)
+	- binutils
+	- gcc
+	- oldstuff
+	- perl
