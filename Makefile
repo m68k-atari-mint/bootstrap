@@ -91,7 +91,7 @@ aranym.config:
 $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.openssh.done \
 		binutils/.done gcc/.done $(HOST_DRIVE)/.mintbin.done $(HOST_DRIVE)/.mintlib.done $(HOST_DRIVE)/.fdlibm.done \
 		$(HOST_DRIVE)/.fileutils.done $(HOST_DRIVE)/.sh-utils.done $(HOST_DRIVE)/.textutils.done $(HOST_DRIVE)/.sed.done $(HOST_DRIVE)/.gawk.done \
-		$(HOST_DRIVE)/.grep.done $(HOST_DRIVE)/.diffutils.done $(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.perl.done $(HOST_DRIVE)/.hostname.done \
+		$(HOST_DRIVE)/.grep.done $(HOST_DRIVE)/.diffutils.done $(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.m4.done $(HOST_DRIVE)/.perl.done $(HOST_DRIVE)/.hostname.done \
 		$(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/bison/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/gawk/.done \
 		$(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/m4/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/sed/.done
 	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
@@ -262,6 +262,11 @@ $(HOST_DRIVE)/.bison.done: $(DOWNLOADS_DIR)/bison.rpm
 	cd $(HOST_DRIVE) && rpmextract.sh $<
 	touch $@
 
+$(HOST_DRIVE)/.m4.done: $(DOWNLOADS_DIR)/m4.rpm
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && rpmextract.sh $<
+	touch $@
+
 $(HOST_DRIVE)/.perl.done: $(DOWNLOADS_DIR)/perl.rpm
 	mkdir -p $(HOST_DRIVE)
 	cd $(HOST_DRIVE) && rpmextract.sh $<
@@ -396,6 +401,10 @@ $(DOWNLOADS_DIR)/diffutils.rpm:
 $(DOWNLOADS_DIR)/bison.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/bison-1.875-2.m68kmint.rpm"
+
+$(DOWNLOADS_DIR)/m4.rpm:
+	mkdir -p $(DOWNLOADS_DIR)
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/m4-1.4.15-1.m68kmint.rpm"
 
 $(DOWNLOADS_DIR)/perl.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
