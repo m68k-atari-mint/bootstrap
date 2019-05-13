@@ -1,39 +1,46 @@
 Bootstrap plan:
-- we need to create three images:
+- we need to create three drives:
 	1. Cross compiled binaries (to compile sources natively)
 	2. Natively compiled binaries (to compile sources for the final image)
 	3. Final image with only bash, openssh and opkg
-- install to the host drive:
+- install to the boot drive:
 	- emutos
 	- freemint
-- install to the cross image:
-	- bash
-	- binutils
-	- coreutils
-	- diffutils
-	- fdlibm (cross-compiled source)
-	- gawk
-	- gcc
-	- grep
-	- make
-	- mintbin
-	- mintlib (cross-compiled source)
-	- oldstuff from SpareMiNT (most importantly, `shutdown`)
-	- openssh
-	- sed
+- install to the host drive:
+	- bash (SpareMiNT)
+	- binutils (FreeMiNT release)
+	- bison (SpareMiNT)
+	- coreutils (fileutils, sh-utils, textutils from SpareMiNT)
+	- diffutils (SpareMiNT)
+	- fdlibm (cross-compiled FreeMiNT snapshot)
+	- gawk (SpareMiNT)
+	- gcc (FreeMiNT release)
+	- grep (SpareMiNT)
+	- hostname (SpareMiNT)
+	- m4 (SpareMiNT)
+	- mintbin (FreeMiNT snapshot)
+	- mintlib (cross-compiled FreeMiNT snapshot)
+	- oldstuff (most importantly, `shutdown` from SpareMiNT)
+	- openssh (Vincent Riviere's build)
+	- perl (SpareMiNT)
+	- sed (SpareMiNT)
 - ssh to the cross image, build and install to the native image (also create an .ipk for each of them):
 	- bash
 	- binutils (just copy over for now)
+	- bison
 	- coreutils
 	- diffutils
 	- fdlibm
 	- gawk
 	- gcc (just copy over for now)
 	- grep
+	- inetutils
+	- m4
 	- make
 	- mintbin
 	- mintlib
-	- oldstuff from SpareMiNT (just copy over for now)
+	- oldstuff (just copy over for now)
+	- perl (just copy over for now)
 	- sed
 - (later...):
 	- zlib
