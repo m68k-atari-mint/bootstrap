@@ -26,10 +26,10 @@ Bootstrap plan:
 	- sed (SpareMiNT)
 - ssh to the host drive, ./configure and/or build on the native image, install to the final image
 	- bash
-	- zlib
-	- openssl
+	- zlib (only locally + create package)
+	- openssl (only locally + create package)
 	- openssh
-	- libarchive
+	- libarchive (only locally)
 	- opkg
 - ssh to the host drive, ./configure and/or build on the native image, create essential packages:
 	- bison (needs new m4 installed)
