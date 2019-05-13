@@ -29,7 +29,7 @@ Bootstrap plan:
 	- zlib (only locally + create package)
 	- openssl (only locally + create package)
 	- openssh
-	- libarchive (only locally)
+	- libarchive (only locally + create package)
 	- opkg
 - ssh to the host drive, ./configure and/or build on the native image, create essential packages:
 	- bison (needs new m4 installed)
