@@ -9,50 +9,53 @@ TARGET_IMAGE_SIZE = 256
 FINAL_IMAGE	= drive_f.img
 FINAL_IMAGE_SIZE = 512
 
+BUILD_DIR	:= build
 CONFIG_DIR	:= $(PWD)/config
 DOWNLOADS_DIR	:= $(PWD)/downloads
-TOOLS_DIR	:= $(PWD)/tools
 PATCHES_DIR	:= $(PWD)/patches
 SOURCES_DIR	:= $(PWD)/sources
+TOOLS_DIR	:= $(PWD)/tools
 
 WGET		:= wget -q --no-check-certificate -O
 RPM_EXTRACT	:= $(PWD)/rpm_extract.sh
 CONFIGURE	:= configure CFLAGS='-O2 -fomit-frame-pointer' --config-cache --prefix=/usr --exec-prefix=/
 ARANYM_JIT	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-jit -c aranym.config 2> /dev/null &
 ARANYM_MMU	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null &
-SSH		:= ssh root@192.168.251.2
+SSH		:= ssh root@192.168.251.2 source /etc/profile\;
+AND		:= \&\&
 
 ###############################################################################
 
-default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(FINAL_IMAGE) aranym.config
-	$(ARANYM_MMU)
-	sleep 7
-	$(SSH) "cp -ra /h/drive_e/* /e && chown -R root:root /e && chmod 700 /e/root/.ssh && chmod 600 /e/root/.ssh/authorized_keys"
+default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(FINAL_IMAGE) aranym.config ssh
 
-	$(SSH) "source /etc/profile; mkdir /e/root/make && cd /e/root/make && /root/make/$(CONFIGURE) --disable-nls"
-	# we need m4 for bison installed, SpareMiNT build is too old :-(
-	$(SSH) "source /etc/profile; mkdir /e/root/m4 && cd /e/root/m4 && /root/m4/$(CONFIGURE)"
-	-$(SSH) "shutdown"
-	# TODO: compile on host
-	sleep 7
-	$(ARANYM_JIT)
-	sleep 7
-	$(SSH) "source /etc/profile; cd /e/root/make && ./build.sh && strip -s ./make && ./make install-strip DESTDIR=/e"
-	$(SSH) "source /etc/profile; cd /e/root/m4 && make && make install-strip DESTDIR=/e"
-	-$(SSH) "shutdown"
-	sleep 7
+###############################################################################
 
-	# ./configure in an MMU-enabled setup to avoid any nasty surprises
-	$(ARANYM_MMU)
-	sleep 7
-	$(SSH) "source /etc/profile; mkdir /e/root/bash && cd /e/root/bash && /root/bash/$(CONFIGURE) --disable-nls"
-	$(SSH) "source /etc/profile; mkdir /e/root/bash-minimal && cd /e/root/bash-minimal && /root/bash-minimal/$(CONFIGURE) --disable-nls --enable-minimal-config --enable-alias --enable-strict-posix-default"
-	$(SSH) "source /etc/profile; mkdir /e/root/bison && cd /e/root/bison && /root/bison/$(CONFIGURE) --disable-nls"
-	$(SSH) "source /etc/profile; mkdir /e/root/gawk && cd /e/root/gawk && /root/gawk/$(CONFIGURE) --disable-nls"
-	$(SSH) "source /etc/profile; mkdir /e/root/grep && cd /e/root/grep && /root/grep/$(CONFIGURE) --disable-nls"
-	$(SSH) "source /etc/profile; mkdir /e/root/sed && cd /e/root/sed && /root/sed/$(CONFIGURE) --disable-nls --disable-i18n"
-	-$(SSH) "shutdown"
-	sleep 7
+.PHONY: ssh
+ssh: $(BUILD_DIR)/.setup.done $(BUILD_DIR)/.bash.done
+# 	$(SSH) mkdir /e/root/make && cd /e/root/make && /root/make/$(CONFIGURE) --disable-nls
+# 	# we need m4 for bison installed, SpareMiNT build is too old :-(
+# 	$(SSH) mkdir /e/root/m4 && cd /e/root/m4 && /root/m4/$(CONFIGURE)
+# 	-$(SSH) shutdown
+# 	# TODO: compile on host
+# 	sleep 7
+# 	$(ARANYM_JIT)
+# 	sleep 7
+# 	$(SSH) cd /e/root/make && ./build.sh && strip -s ./make && ./make install-strip DESTDIR=/e
+# 	$(SSH) cd /e/root/m4 && make && make install-strip DESTDIR=/e
+# 	-$(SSH) shutdown
+# 	sleep 7
+#
+# 	# ./configure in an MMU-enabled setup to avoid any nasty surprises
+# 	$(ARANYM_MMU)
+# 	sleep 7
+# 	$(SSH) mkdir /e/root/bash && cd /e/root/bash && /root/bash/$(CONFIGURE) --disable-nls
+# 	$(SSH) mkdir /e/root/bash-minimal && cd /e/root/bash-minimal && /root/bash-minimal/$(CONFIGURE) --disable-nls --enable-minimal-config --enable-alias --enable-strict-posix-default
+# 	$(SSH) mkdir /e/root/bison && cd /e/root/bison && /root/bison/$(CONFIGURE) --disable-nls
+# 	$(SSH) mkdir /e/root/gawk && cd /e/root/gawk && /root/gawk/$(CONFIGURE) --disable-nls
+# 	$(SSH) mkdir /e/root/grep && cd /e/root/grep && /root/grep/$(CONFIGURE) --disable-nls
+# 	$(SSH) mkdir /e/root/sed && cd /e/root/sed && /root/sed/$(CONFIGURE) --disable-nls --disable-i18n
+# 	-$(SSH) shutdown
+# 	sleep 7
 
 	# make && make install in a fastest possible way
 	#$(ARANYM_JIT)
@@ -62,14 +65,14 @@ default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(
 
 	#$(ARANYM_JIT)
 	#sleep 7
-	#$(SSH) "cd /e/root/bash-minimal && make && make install-strip DESTDIR=/e"
+	#$(SSH) "cd /e/root/bash-minimal && make && make install-strip DESTDIR=/e
 	# a bit hackish but this will ensure the safest ./configure environment for other packages
-	#$(SSH) "mv /e/bin/bash /e/bin/sh && rm /bin/sh && cp /e/bin/sh /bin/sh"
-	#$(SSH) "cd /e/root/bash && make && make install-strip DESTDIR=/e"
-	#$(SSH) "rm /bin/bash && cp /e/bin/bash /bin/bash"
-	#$(SSH) "cd /e/root/gawk && make && make install-strip DESTDIR=/e"
-	#$(SSH) "cd /e/root/grep && make && make install-strip DESTDIR=/e"
-	#$(SSH) "cd /e/root/sed && make && make install-strip DESTDIR=/e"
+	#$(SSH) "mv /e/bin/bash /e/bin/sh && rm /bin/sh && cp /e/bin/sh /bin/sh
+	#$(SSH) "cd /e/root/bash && make && make install-strip DESTDIR=/e
+	#$(SSH) "rm /bin/bash && cp /e/bin/bash /bin/bash
+	#$(SSH) "cd /e/root/gawk && make && make install-strip DESTDIR=/e
+	#$(SSH) "cd /e/root/grep && make && make install-strip DESTDIR=/e
+	#$(SSH) "cd /e/root/sed && make && make install-strip DESTDIR=/e
 
 	#cp -ra $(SOURCES_DIR)/coreutils $(TARGET_DRIVE)/root
 	#cp -ra $(SOURCES_DIR)/diffutils $(TARGET_DRIVE)/root
@@ -78,11 +81,25 @@ default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(
 	# needs bison, flex, bash
 	#cp -ra $(SOURCES_DIR)/mintlib $(TARGET_DRIVE)/root
 
-.PHONY: configure
-configure:
+$(BUILD_DIR)/.setup.done:
+	mkdir -p $(BUILD_DIR)
 
-.PHONY: build
-build:
+	$(ARANYM_MMU)
+	sleep 7
+	$(SSH) mkdir -p /f/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
+	# TODO: /etc/ stuff
+	$(SSH) mkdir -p /f/etc $(AND) touch /f/etc/utmp
+	$(SSH) mkdir -p /f/var/log $(AND) touch /f/var/log/lastlog
+	$(SSH) mkdir -p /f/var/run $(AND) touch /f/var/run/utmp
+	$(SSH) mkdir -p /f/root/.ssh $(AND) cp /d/root/.ssh/authorized_keys /f/root/.ssh $(AND) chmod 700 /f/root/.ssh $(AND) chmod 600 /f/root/.ssh/authorized_keys
+
+	touch $@
+
+$(BUILD_DIR)/.bash.done:
+	mkdir -p $(BUILD_DIR)
+	touch $@
+
+###############################################################################
 
 aranym.config:
 	# unfortunately, ARAnyM can't have config in a subfolder
@@ -494,6 +511,7 @@ $(SOURCES_DIR)/zlib.tar.xz:
 driveclean:
 	rm -f $(TARGET_IMAGE) $(FINAL_IMAGE)
 	rm -rf $(BOOT_DRIVE) $(HOST_DRIVE)
+	rm -rf $(BUILD_DIR)
 
 .PHONY: clean
 clean: driveclean

@@ -6,6 +6,7 @@ drive_e.img
 drive_f.img
 downloads/
 sources/
+build/
 emutos/
 oldstuff/
 binutils/
