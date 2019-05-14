@@ -26,6 +26,7 @@ Bootstrap plan:
 	- sed (SpareMiNT)
 - ssh to the host drive, ./configure and/or build on the native image, install to the final image
 	- bash
+	- oldstuff (copy over for now)
 	- zlib (only locally + create package)
 	- openssl (only locally + create package)
 	- openssh
@@ -35,17 +36,16 @@ Bootstrap plan:
 	- bison (needs new m4 installed)
 	- coreutils
 	- diffutils
-	- fdlibm
 	- gawk
 	- grep
 	- inetutils
 	- m4
 	- make
 	- mintbin
-	- mintlib
 	- sed
 - (later...):
-	- binutils
-	- gcc
-	- oldstuff
-	- perl
+	- binutils (just package it for now)
+	- fdlibm (can be 100% cross compiled & packaged)
+	- gcc (just package it for now)
+	- mintlib (can be 100% cross compiled & packaged)
+	- perl (depends on the situation with dynamic modules)

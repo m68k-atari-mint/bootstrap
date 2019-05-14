@@ -132,19 +132,12 @@ $(TARGET_IMAGE): $(TARGET_DRIVE)/.done
 	dd if=/dev/zero of=$@ bs=1M count=$(TARGET_IMAGE_SIZE)
 	mkfs.ext2 $@
 
-$(TARGET_DRIVE)/.done: binutils/.done gcc/.done oldstuff/.done $(SOURCES_DIR)/fdlibm/.done $(SOURCES_DIR)/mintbin/.done $(SOURCES_DIR)/mintlib/.done
+$(TARGET_DRIVE)/.done: $(SOURCES_DIR)/mintbin/.done
 
 	mkdir -p $(TARGET_DRIVE)
 	mkdir -p $(TARGET_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
 
-	# cheat a little :)
-	cp -ra binutils/* $(TARGET_DRIVE)
-	cp -ra gcc/* $(TARGET_DRIVE)
-	cp -ra oldstuff/* $(TARGET_DRIVE)
-
-	cp -ra $(SOURCES_DIR)/fdlibm $(TARGET_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/mintbin $(TARGET_DRIVE)/root
-	cp -ra $(SOURCES_DIR)/mintlib $(TARGET_DRIVE)/root
 
 	mkdir -p $(TARGET_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(TARGET_DRIVE)/root/.ssh/authorized_keys
 
