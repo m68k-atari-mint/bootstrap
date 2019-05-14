@@ -24,13 +24,13 @@ Bootstrap plan:
 	- openssh (Vincent Riviere's build)
 	- perl (SpareMiNT)
 	- sed (SpareMiNT)
-- ssh to the host drive, ./configure and/or build on the native image, install to the final image
+- ssh to the host drive, ./configure and/or build on the native image, install to the final image (+create packages)
 	- bash
 	- oldstuff (copy over for now)
-	- zlib (only locally + create package)
-	- openssl (only locally + create package)
+	- zlib (install only locally)
+	- openssl (install only locally)
 	- openssh
-	- libarchive (only locally + create package)
+	- libarchive (install only locally)
 	- opkg
 - ssh to the host drive, ./configure and/or build on the native image, create essential packages:
 	- bison (needs new m4 installed)

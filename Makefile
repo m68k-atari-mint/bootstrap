@@ -18,11 +18,12 @@ TOOLS_DIR	:= $(PWD)/tools
 
 WGET		:= wget -q --no-check-certificate -O
 RPM_EXTRACT	:= $(PWD)/rpm_extract.sh
-CONFIGURE	:= configure CFLAGS='-O2 -fomit-frame-pointer' --config-cache --prefix=/usr --exec-prefix=/
-ARANYM_JIT	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-jit -c aranym.config 2> /dev/null &
-ARANYM_MMU	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null &
+CONFIGURE	:= configure CFLAGS=\'-O2 -fomit-frame-pointer\' --config-cache --prefix=/usr --exec-prefix=/
+ARANYM_JIT	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-jit -c aranym.config 2> /dev/null && sleep 7 &
+ARANYM_MMU	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null && sleep 7 &
 SSH		:= ssh root@192.168.251.2 source /etc/profile\;
 AND		:= \&\&
+SSH_SHUTDOWN	:= $(SSH) shutdown; sleep 7
 
 ###############################################################################
 
@@ -31,7 +32,7 @@ default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(
 ###############################################################################
 
 .PHONY: ssh
-ssh: $(BUILD_DIR)/.setup.done $(BUILD_DIR)/.bash.done
+ssh: $(BUILD_DIR)/.setup.done $(BUILD_DIR)/config.cache.bash
 # 	$(SSH) mkdir /e/root/make && cd /e/root/make && /root/make/$(CONFIGURE) --disable-nls
 # 	# we need m4 for bison installed, SpareMiNT build is too old :-(
 # 	$(SSH) mkdir /e/root/m4 && cd /e/root/m4 && /root/m4/$(CONFIGURE)
@@ -48,7 +49,6 @@ ssh: $(BUILD_DIR)/.setup.done $(BUILD_DIR)/.bash.done
 # 	# ./configure in an MMU-enabled setup to avoid any nasty surprises
 # 	$(ARANYM_MMU)
 # 	sleep 7
-# 	$(SSH) mkdir /e/root/bash && cd /e/root/bash && /root/bash/$(CONFIGURE) --disable-nls
 # 	$(SSH) mkdir /e/root/bash-minimal && cd /e/root/bash-minimal && /root/bash-minimal/$(CONFIGURE) --disable-nls --enable-minimal-config --enable-alias --enable-strict-posix-default
 # 	$(SSH) mkdir /e/root/bison && cd /e/root/bison && /root/bison/$(CONFIGURE) --disable-nls
 # 	$(SSH) mkdir /e/root/gawk && cd /e/root/gawk && /root/gawk/$(CONFIGURE) --disable-nls
@@ -85,19 +85,25 @@ $(BUILD_DIR)/.setup.done:
 	mkdir -p $(BUILD_DIR)
 
 	$(ARANYM_MMU)
-	sleep 7
+
 	$(SSH) mkdir -p /f/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
-	# TODO: /etc/ stuff
+	# TODO: /etc/profile & ssh keys
+	$(SSH) mkdir -p /f/etc $(AND) cp /etc/{group,hostname,passwd} /f/etc
 	$(SSH) mkdir -p /f/etc $(AND) touch /f/etc/utmp
 	$(SSH) mkdir -p /f/var/log $(AND) touch /f/var/log/lastlog
 	$(SSH) mkdir -p /f/var/run $(AND) touch /f/var/run/utmp
-	$(SSH) mkdir -p /f/root/.ssh $(AND) cp /d/root/.ssh/authorized_keys /f/root/.ssh $(AND) chmod 700 /f/root/.ssh $(AND) chmod 600 /f/root/.ssh/authorized_keys
+	$(SSH) mkdir -p /f/root/.ssh $(AND) cp /root/.ssh/authorized_keys /f/root/.ssh $(AND) chmod 700 /f/root/.ssh $(AND) chmod 600 /f/root/.ssh/authorized_keys
 
+	-$(SSH_SHUTDOWN)
 	touch $@
 
-$(BUILD_DIR)/.bash.done:
+# ./configure in an MMU-enabled setup to avoid any nasty surprises
+
+$(BUILD_DIR)/config.cache.bash:
 	mkdir -p $(BUILD_DIR)
-	touch $@
+	$(ARANYM_MMU)
+	$(SSH) rm -rf mkdir /e/bash $(AND) mkdir /e/bash $(AND) cd /e/bash $(AND) /root/bash/$(CONFIGURE) --disable-nls $(AND) cp config.cache /h/build/config.cache.bash
+	-$(SSH_SHUTDOWN)
 
 ###############################################################################
 
