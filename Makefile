@@ -9,7 +9,7 @@ TARGET_IMAGE_SIZE = 256
 FINAL_IMAGE	= drive_f.img
 FINAL_IMAGE_SIZE = 512
 
-BUILD_DIR	:= build
+BUILD_DIR	:= $(PWD)/build
 CONFIG_DIR	:= $(PWD)/config
 DOWNLOADS_DIR	:= $(PWD)/downloads
 PATCHES_DIR	:= $(PWD)/patches
@@ -19,11 +19,13 @@ TOOLS_DIR	:= $(PWD)/tools
 WGET		:= wget -q --no-check-certificate -O
 RPM_EXTRACT	:= $(PWD)/rpm_extract.sh
 CONFIGURE	:= configure CFLAGS=\'-O2 -fomit-frame-pointer\' --config-cache --prefix=/usr --exec-prefix=/
+BUILD_CONFIGURE	:= configure CFLAGS='-O2 -fomit-frame-pointer' --config-cache --prefix=/usr --exec-prefix=/ --host=m68k-atari-mint
 ARANYM_JIT	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-jit -c aranym.config 2> /dev/null && sleep 7 &
 ARANYM_MMU	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null && sleep 7 &
 SSH		:= ssh root@192.168.251.2 source /etc/profile\;
 AND		:= \&\&
 SSH_SHUTDOWN	:= $(SSH) shutdown; sleep 7
+SED_CONFIG	:= sed -i -e 's/^ac_cv_env_host_alias_set=/ac_cv_env_host_alias_set=set/;s/^ac_cv_env_host_alias_value=/ac_cv_env_host_alias_value=m68k-atari-mint/;/ac_cv_build=/d;'
 
 ###############################################################################
 
@@ -32,7 +34,7 @@ default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(
 ###############################################################################
 
 .PHONY: ssh
-ssh: $(BUILD_DIR)/.setup.done $(BUILD_DIR)/config.cache.bash
+ssh: $(BUILD_DIR)/.setup.done $(BUILD_DIR)/.bash.done
 # 	$(SSH) mkdir /e/root/make && cd /e/root/make && /root/make/$(CONFIGURE) --disable-nls
 # 	# we need m4 for bison installed, SpareMiNT build is too old :-(
 # 	$(SSH) mkdir /e/root/m4 && cd /e/root/m4 && /root/m4/$(CONFIGURE)
@@ -97,13 +99,24 @@ $(BUILD_DIR)/.setup.done:
 	-$(SSH_SHUTDOWN)
 	touch $@
 
+$(BUILD_DIR)/.bash.done: $(BUILD_DIR)/config.cache.bash
+	mkdir -p $(BUILD_DIR)/bash
+	cp $< $(BUILD_DIR)/bash/config.cache
+	$(SED_CONFIG) $(BUILD_DIR)/bash/config.cache
+
+	cd $(BUILD_DIR)/bash && $(SOURCES_DIR)/bash/$(BUILD_CONFIGURE) && make && make install-strip DESTDIR=$(BUILD_DIR)/bash-installed
+
+	$(SSH) cp -r /h/build/bash-installed/* /f
+
+	-$(SSH_SHUTDOWN)
+	touch $@
+
 # ./configure in an MMU-enabled setup to avoid any nasty surprises
 
 $(BUILD_DIR)/config.cache.bash:
 	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
 	$(SSH) rm -rf mkdir /e/bash $(AND) mkdir /e/bash $(AND) cd /e/bash $(AND) /root/bash/$(CONFIGURE) --disable-nls $(AND) cp config.cache /h/build/config.cache.bash
-	-$(SSH_SHUTDOWN)
 
 ###############################################################################
 
