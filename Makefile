@@ -2,9 +2,8 @@ SHELL		:= /bin/bash
 
 BOOT_DRIVE	:= $(PWD)/drive_c
 HOST_DRIVE	:= $(PWD)/drive_d
-TARGET_DRIVE	:= $(PWD)/drive_e
 
-TARGET_IMAGE	= $(TARGET_DRIVE).img
+TARGET_IMAGE	= drive_e.img
 TARGET_IMAGE_SIZE = 256
 
 FINAL_IMAGE	= drive_f.img
@@ -25,7 +24,7 @@ SSH		:= ssh root@192.168.251.2
 
 ###############################################################################
 
-default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) aranym.config
+default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(FINAL_IMAGE) aranym.config
 	$(ARANYM_MMU)
 	sleep 7
 	$(SSH) "cp -ra /h/drive_e/* /e && chown -R root:root /e && chmod 700 /e/root/.ssh && chmod 600 /e/root/.ssh/authorized_keys"
@@ -94,7 +93,8 @@ $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.open
 		$(HOST_DRIVE)/.fileutils.done $(HOST_DRIVE)/.sh-utils.done $(HOST_DRIVE)/.textutils.done $(HOST_DRIVE)/.sed.done $(HOST_DRIVE)/.gawk.done \
 		$(HOST_DRIVE)/.grep.done $(HOST_DRIVE)/.diffutils.done $(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.m4.done $(HOST_DRIVE)/.perl.done $(HOST_DRIVE)/.hostname.done \
 		$(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/bison/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/gawk/.done \
-		$(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/m4/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/sed/.done
+		$(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/libarchive/.done $(SOURCES_DIR)/m4/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/mintbin/.done \
+		$(SOURCES_DIR)/openssh/.done $(SOURCES_DIR)/openssl/.done $(SOURCES_DIR)/opkg/.done $(SOURCES_DIR)/sed/.done $(SOURCES_DIR)/zlib/.done
 	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
 
 	cp -ra $(CONFIG_DIR)/{etc,var} $(HOST_DRIVE)
@@ -112,7 +112,13 @@ $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.open
 	cp -ra $(SOURCES_DIR)/grep $(HOST_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/m4 $(HOST_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/make $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/libarchive $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/mintbin $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/openssh $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/openssl $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/opkg $(HOST_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/sed $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/zlib $(HOST_DRIVE)/root
 
 	# no clue what is this about but it doesn't work
 	rm -f $(HOST_DRIVE)/bin/awk
@@ -125,23 +131,13 @@ $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.open
 
 	touch $@
 
-$(TARGET_IMAGE): $(TARGET_DRIVE)/.done
-	# unfortunately, we can't directly copy files to this image as with host drive
-	# because genext2fs-produced images behave strangely when writing to them
-	# so wait until aranym+sshd is running and copy the files then
+$(TARGET_IMAGE):
 	dd if=/dev/zero of=$@ bs=1M count=$(TARGET_IMAGE_SIZE)
 	mkfs.ext2 $@
 
-$(TARGET_DRIVE)/.done: $(SOURCES_DIR)/mintbin/.done
-
-	mkdir -p $(TARGET_DRIVE)
-	mkdir -p $(TARGET_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
-
-	cp -ra $(SOURCES_DIR)/mintbin $(TARGET_DRIVE)/root
-
-	mkdir -p $(TARGET_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(TARGET_DRIVE)/root/.ssh/authorized_keys
-
-	touch $@
+$(FINAL_IMAGE):
+	dd if=/dev/zero of=$@ bs=1M count=$(FINAL_IMAGE_SIZE)
+	mkfs.ext2 $@
 
 ###############################################################################
 
@@ -268,8 +264,8 @@ $(HOST_DRIVE)/.hostname.done: $(DOWNLOADS_DIR)/hostname.rpm
 
 $(SOURCES_DIR)/bash/.done: $(SOURCES_DIR)/bash.tar.gz
 	cd $(SOURCES_DIR) && tar xzf $< && mv bash-* "bash"
-	cd $(SOURCES_DIR)/bash && cat $(PATCHES_DIR)/bash-4.2-patches/* | patch -p0
-	cd $(SOURCES_DIR)/bash && cat $(PATCHES_DIR)/bash-4.2.53.patch | patch -p1
+	cd $(SOURCES_DIR)/bash && cat $(PATCHES_DIR)/bash/bash-4.2-patches/* | patch -p0
+	cd $(SOURCES_DIR)/bash && cat $(PATCHES_DIR)/bash/bash-4.2.53.patch | patch -p1
 	touch $@
 
 $(SOURCES_DIR)/bison/.done: $(SOURCES_DIR)/bison.tar.xz
@@ -300,6 +296,10 @@ $(SOURCES_DIR)/m4/.done: $(SOURCES_DIR)/m4.tar.xz
 	cd $(SOURCES_DIR) && tar xJf $< && mv m4-* "m4"
 	touch $@
 
+$(SOURCES_DIR)/libarchive/.done: $(SOURCES_DIR)/libarchive.tar.gz
+	cd $(SOURCES_DIR) && tar xzf $< && mv libarchive-* "libarchive"
+	touch $@
+
 $(SOURCES_DIR)/make/.done: $(SOURCES_DIR)/make.tar.bz2
 	cd $(SOURCES_DIR) && tar xjf $< && mv make-* "make"
 	touch $@
@@ -312,8 +312,25 @@ $(SOURCES_DIR)/mintlib/.done: $(SOURCES_DIR)/mintlib.tar.gz
 	cd $(SOURCES_DIR) && tar xzf $< && mv mintlib-master "mintlib"
 	touch $@
 
+$(SOURCES_DIR)/openssh/.done: $(SOURCES_DIR)/openssh.tar.gz
+	cd $(SOURCES_DIR) && tar xzf $< && mv openssh-* "openssh"
+	touch $@
+
+$(SOURCES_DIR)/openssl/.done: $(SOURCES_DIR)/openssl.tar.gz
+	cd $(SOURCES_DIR) && tar xzf $< && mv openssl-* "openssl"
+	touch $@
+
+$(SOURCES_DIR)/opkg/.done: $(SOURCES_DIR)/opkg.tar.gz
+	cd $(SOURCES_DIR) && tar xzf $< && mv opkg-* "opkg"
+	cd $(SOURCES_DIR)/opkg && cat $(PATCHES_DIR)/opkg/* | patch -p1
+	touch $@
+
 $(SOURCES_DIR)/sed/.done: $(SOURCES_DIR)/sed.tar.xz
 	cd $(SOURCES_DIR) && tar xJf $< && mv sed-* "sed"
+	touch $@
+
+$(SOURCES_DIR)/zlib/.done: $(SOURCES_DIR)/zlib.tar.xz
+	cd $(SOURCES_DIR) && tar xJf $< && mv zlib-* "zlib"
 	touch $@
 
 ###############################################################################
@@ -431,6 +448,10 @@ $(SOURCES_DIR)/grep.tar.xz:
 	mkdir -p $(SOURCES_DIR)
 	$(WGET) $@ "https://ftp.gnu.org/gnu/grep/grep-3.3.tar.xz"
 
+$(SOURCES_DIR)/libarchive.tar.gz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://www.libarchive.org/downloads/libarchive-3.3.3.tar.gz"
+
 $(SOURCES_DIR)/m4.tar.xz:
 	mkdir -p $(SOURCES_DIR)
 	$(WGET) $@ "https://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.xz"
@@ -451,12 +472,28 @@ $(SOURCES_DIR)/sed.tar.xz:
 	mkdir -p $(SOURCES_DIR)
 	$(WGET) $@ "https://ftp.gnu.org/gnu/sed/sed-4.7.tar.xz"
 
+$(SOURCES_DIR)/openssh.tar.gz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-8.0p1.tar.gz"
+
+$(SOURCES_DIR)/openssl.tar.gz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://www.openssl.org/source/openssl-1.0.2r.tar.gz"
+
+$(SOURCES_DIR)/opkg.tar.gz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "http://downloads.yoctoproject.org/releases/opkg/opkg-0.4.0.tar.gz"
+
+$(SOURCES_DIR)/zlib.tar.xz:
+	mkdir -p $(SOURCES_DIR)
+	$(WGET) $@ "https://zlib.net/zlib-1.2.11.tar.xz"
+
 ###############################################################################
 
 .PHONY: driveclean
 driveclean:
 	rm -f $(TARGET_IMAGE) $(FINAL_IMAGE)
-	rm -rf $(BOOT_DRIVE) $(HOST_DRIVE) $(TARGET_DRIVE)
+	rm -rf $(BOOT_DRIVE) $(HOST_DRIVE)
 
 .PHONY: clean
 clean: driveclean
