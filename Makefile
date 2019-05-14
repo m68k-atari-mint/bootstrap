@@ -100,13 +100,16 @@ $(BUILD_DIR)/.setup.done:
 	touch $@
 
 $(BUILD_DIR)/.bash.done: $(BUILD_DIR)/config.cache.bash
-	mkdir -p $(BUILD_DIR)/bash
-	cp $< $(BUILD_DIR)/bash/config.cache
-	$(SED_CONFIG) $(BUILD_DIR)/bash/config.cache
+	#mkdir -p $(BUILD_DIR)/bash
+	#cp $< $(BUILD_DIR)/bash/config.cache
+	#$(SED_CONFIG) $(BUILD_DIR)/bash/config.cache
 
-	cd $(BUILD_DIR)/bash && $(SOURCES_DIR)/bash/$(BUILD_CONFIGURE) && make && make install-strip DESTDIR=$(BUILD_DIR)/bash-installed
+	#cd $(BUILD_DIR)/bash && $(SOURCES_DIR)/bash/$(BUILD_CONFIGURE) && make && make install-strip DESTDIR=$(BUILD_DIR)/bash-installed
 
-	$(SSH) cp -r /h/build/bash-installed/* /f
+	#$(SSH) cp -r /h/build/bash-installed/* /f
+	$(ARANYM_JIT)
+
+	time $(SSH) cd /e/bash $(AND) make $(AND) make install-strip DESTDIR=/f
 
 	-$(SSH_SHUTDOWN)
 	touch $@
@@ -116,7 +119,8 @@ $(BUILD_DIR)/.bash.done: $(BUILD_DIR)/config.cache.bash
 $(BUILD_DIR)/config.cache.bash:
 	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
-	$(SSH) rm -rf mkdir /e/bash $(AND) mkdir /e/bash $(AND) cd /e/bash $(AND) /root/bash/$(CONFIGURE) --disable-nls $(AND) cp config.cache /h/build/config.cache.bash
+	time $(SSH) rm -rf mkdir /e/bash $(AND) mkdir /e/bash $(AND) cd /e/bash $(AND) /root/bash/$(CONFIGURE) --disable-nls $(AND) cp config.cache /h/build/config.cache.bash
+	-$(SSH_SHUTDOWN)
 
 ###############################################################################
 
