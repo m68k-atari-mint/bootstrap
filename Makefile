@@ -17,6 +17,7 @@ PATCHES_DIR	:= $(PWD)/patches
 SOURCES_DIR	:= $(PWD)/sources
 
 WGET		:= wget -q --no-check-certificate -O
+RPM_EXTRACT	:= $(PWD)/rpm_extract.sh
 CONFIGURE	:= configure CFLAGS='-O2 -fomit-frame-pointer' --config-cache --prefix=/usr --exec-prefix=/
 ARANYM_JIT	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-jit -c aranym.config 2> /dev/null &
 ARANYM_MMU	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null &
@@ -114,10 +115,10 @@ $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.open
 	cp -ra $(SOURCES_DIR)/sed $(HOST_DRIVE)/root
 
 	# no clue what is this about but it doesn't work
-	rm $(HOST_DRIVE)/bin/awk
+	rm -f $(HOST_DRIVE)/bin/awk
 	ln -s gawk $(HOST_DRIVE)/bin/awk
-	rm $(HOST_DRIVE)/usr/bin/awk
-	rm $(HOST_DRIVE)/usr/bin/gawk
+	rm -f $(HOST_DRIVE)/usr/bin/awk
+	rm -f $(HOST_DRIVE)/usr/bin/gawk
 	mkdir -p $(HOST_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(HOST_DRIVE)/root/.ssh/authorized_keys
 	# it's a hostfs drive...
 	sed -i -e 's/^#StrictModes yes/StrictModes no/;' $(HOST_DRIVE)/etc/ssh/sshd_config
@@ -168,19 +169,12 @@ $(BOOT_DRIVE)/.done: $(DOWNLOADS_DIR)/freemint.zip $(CONFIG_DIR)/mint.cnf $(TOOL
 
 $(HOST_DRIVE)/.bash.done: $(DOWNLOADS_DIR)/bash.rpm
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && rpmextract.sh $<
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
 
 oldstuff/.done: $(DOWNLOADS_DIR)/oldstuff.rpm
 	mkdir -p $(HOST_DRIVE)
-	mkdir "oldstuff" && cd "oldstuff" && rpmextract.sh $<
-	#\
-	#if [ $(shell which rpm2cpio) ]; \
-	#then \
-	#	rpm2cpio $< | cpio -i --make-directories; \
-	#else \
-	#	rpmextract.sh $<; \
-	#fi
+	mkdir "oldstuff" && cd "oldstuff" && $(RPM_EXTRACT) $<
 	touch $@
 
 $(HOST_DRIVE)/.openssh.done: $(DOWNLOADS_DIR)/openssh.tar.bz2
@@ -226,55 +220,55 @@ fdlibm-src/.done: $(DOWNLOADS_DIR)/fdlibm-src.tar.gz
 
 $(HOST_DRIVE)/.fileutils.done: $(DOWNLOADS_DIR)/fileutils.rpm
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && rpmextract.sh $<
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
 $(HOST_DRIVE)/.sh-utils.done: $(DOWNLOADS_DIR)/sh-utils.rpm
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && rpmextract.sh $<
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
 $(HOST_DRIVE)/.textutils.done: $(DOWNLOADS_DIR)/textutils.rpm
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && rpmextract.sh $<
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
 
 $(HOST_DRIVE)/.sed.done: $(DOWNLOADS_DIR)/sed.rpm
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && rpmextract.sh $<
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
 
 $(HOST_DRIVE)/.gawk.done: $(DOWNLOADS_DIR)/gawk.rpm
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && rpmextract.sh $<
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
 
 $(HOST_DRIVE)/.grep.done: $(DOWNLOADS_DIR)/grep.rpm
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && rpmextract.sh $<
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
 
 $(HOST_DRIVE)/.diffutils.done: $(DOWNLOADS_DIR)/diffutils.rpm
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && rpmextract.sh $<
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
 
 $(HOST_DRIVE)/.bison.done: $(DOWNLOADS_DIR)/bison.rpm
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && rpmextract.sh $<
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
 
 $(HOST_DRIVE)/.m4.done: $(DOWNLOADS_DIR)/m4.rpm
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && rpmextract.sh $<
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
 
 $(HOST_DRIVE)/.perl.done: $(DOWNLOADS_DIR)/perl.rpm
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && rpmextract.sh $<
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
 
 $(HOST_DRIVE)/.hostname.done: $(DOWNLOADS_DIR)/hostname.rpm
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && rpmextract.sh $<
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
 
 ###############################################################################
