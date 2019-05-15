@@ -100,7 +100,7 @@ configure: aranym-mmu $(BUILD_DIR)/.make.configured $(BUILD_DIR)/.sh.configured 
 	-$(SSH_SHUTDOWN)
 
 $(BUILD_DIR)/.make.configured:
-	$(SSH) rm -rf /e/root/make $(AND) mkdir /e/root/make $(AND) cd /e/root/make $(AND) /root/make/$(CONFIGURE) --disable-nls
+	$(SSH) rm -rf /e/root/make $(AND) mkdir -p /e/root/make $(AND) cd /e/root/make $(AND) /root/make/$(CONFIGURE) --disable-nls
 	touch $@
 
 $(BUILD_DIR)/.sh.configured:
@@ -142,8 +142,8 @@ aranym.config:
 
 $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.openssh.done \
 		binutils/.done gcc/.done $(HOST_DRIVE)/.mintbin.done $(HOST_DRIVE)/.mintlib.done $(HOST_DRIVE)/.fdlibm.done \
-		$(HOST_DRIVE)/.fileutils.done $(HOST_DRIVE)/.sh-utils.done $(HOST_DRIVE)/.textutils.done $(HOST_DRIVE)/.sed.done $(HOST_DRIVE)/.gawk.done \
-		$(HOST_DRIVE)/.grep.done $(HOST_DRIVE)/.diffutils.done $(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.m4.done $(HOST_DRIVE)/.perl.done $(HOST_DRIVE)/.hostname.done \
+		$(HOST_DRIVE)/.coreutils.done $(HOST_DRIVE)/.sed.done $(HOST_DRIVE)/.gawk.done $(HOST_DRIVE)/.grep.done $(HOST_DRIVE)/.diffutils.done \
+		$(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.m4.done $(HOST_DRIVE)/.perl.done $(HOST_DRIVE)/.hostname.done \
 		$(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/bison/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/gawk/.done \
 		$(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/libarchive/.done $(SOURCES_DIR)/m4/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/mintbin/.done \
 		$(SOURCES_DIR)/openssh/.done $(SOURCES_DIR)/openssl/.done $(SOURCES_DIR)/opkg/.done $(SOURCES_DIR)/sed/.done $(SOURCES_DIR)/zlib/.done
@@ -260,17 +260,9 @@ fdlibm-src/.done: $(DOWNLOADS_DIR)/fdlibm-src.tar.gz
 	mv fdlibm-master "fdlibm-src"
 	touch $@
 
-$(HOST_DRIVE)/.fileutils.done: $(DOWNLOADS_DIR)/fileutils.rpm
+$(HOST_DRIVE)/.coreutils.done: $(DOWNLOADS_DIR)/coreutils.tar.bz2
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
-	touch $@
-$(HOST_DRIVE)/.sh-utils.done: $(DOWNLOADS_DIR)/sh-utils.rpm
-	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
-	touch $@
-$(HOST_DRIVE)/.textutils.done: $(DOWNLOADS_DIR)/textutils.rpm
-	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
+	cd $(HOST_DRIVE) && tar xjf $<
 	touch $@
 
 $(HOST_DRIVE)/.sed.done: $(DOWNLOADS_DIR)/sed.rpm
@@ -428,16 +420,9 @@ $(DOWNLOADS_DIR)/fdlibm-src.tar.gz:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "https://github.com/freemint/fdlibm/archive/master.tar.gz"
 
-# coreutils
-$(DOWNLOADS_DIR)/fileutils.rpm:
+$(DOWNLOADS_DIR)/coreutils.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/fileutils-4.1-2.m68kmint.rpm"
-$(DOWNLOADS_DIR)/sh-utils.rpm:
-	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/sh-utils-2.0.11-1.m68kmint.rpm"
-$(DOWNLOADS_DIR)/textutils.rpm:
-	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/textutils-2.0.11-2.m68kmint.rpm"
+	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/coreutils/coreutils-8.21-mint-20131205-bin-mint020-20131219.tar.bz2"
 
 $(DOWNLOADS_DIR)/sed.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
