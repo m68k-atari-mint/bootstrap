@@ -4,7 +4,7 @@ BOOT_DRIVE	:= $(PWD)/drive_c
 HOST_DRIVE	:= $(PWD)/drive_d
 
 TARGET_IMAGE	= drive_e.img
-TARGET_IMAGE_SIZE = 256
+TARGET_IMAGE_SIZE = 1024
 
 FINAL_IMAGE	= drive_f.img
 FINAL_IMAGE_SIZE = 512
@@ -18,14 +18,12 @@ TOOLS_DIR	:= $(PWD)/tools
 
 WGET		:= wget -q --no-check-certificate -O
 RPM_EXTRACT	:= $(PWD)/rpm_extract.sh
-CONFIGURE	:= configure CFLAGS=\'-O2 -fomit-frame-pointer\' --config-cache --prefix=/usr --exec-prefix=/
-BUILD_CONFIGURE	:= configure CFLAGS='-O2 -fomit-frame-pointer' --config-cache --prefix=/usr --exec-prefix=/ --host=m68k-atari-mint
+CONFIGURE	:= configure CFLAGS=\'-O2 -fomit-frame-pointer\' --prefix=/usr --exec-prefix=/
 ARANYM_JIT	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-jit -c aranym.config 2> /dev/null && sleep 7 &
 ARANYM_MMU	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null && sleep 7 &
 SSH		:= ssh root@192.168.251.2 source /etc/profile\;
 AND		:= \&\&
 SSH_SHUTDOWN	:= $(SSH) shutdown; sleep 7
-SED_CONFIG	:= sed -i -e 's/^ac_cv_env_host_alias_set=/ac_cv_env_host_alias_set=set/;s/^ac_cv_env_host_alias_value=/ac_cv_env_host_alias_value=m68k-atari-mint/;/ac_cv_build=/d;'
 
 ###############################################################################
 
@@ -34,8 +32,7 @@ default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(
 ###############################################################################
 
 .PHONY: ssh
-ssh: $(BUILD_DIR)/.setup.done $(BUILD_DIR)/.bash.done
-# 	$(SSH) mkdir /e/root/make && cd /e/root/make && /root/make/$(CONFIGURE) --disable-nls
+ssh: $(BUILD_DIR)/.setup.done configure build
 # 	# we need m4 for bison installed, SpareMiNT build is too old :-(
 # 	$(SSH) mkdir /e/root/m4 && cd /e/root/m4 && /root/m4/$(CONFIGURE)
 # 	-$(SSH) shutdown
@@ -43,7 +40,6 @@ ssh: $(BUILD_DIR)/.setup.done $(BUILD_DIR)/.bash.done
 # 	sleep 7
 # 	$(ARANYM_JIT)
 # 	sleep 7
-# 	$(SSH) cd /e/root/make && ./build.sh && strip -s ./make && ./make install-strip DESTDIR=/e
 # 	$(SSH) cd /e/root/m4 && make && make install-strip DESTDIR=/e
 # 	-$(SSH) shutdown
 # 	sleep 7
@@ -51,7 +47,6 @@ ssh: $(BUILD_DIR)/.setup.done $(BUILD_DIR)/.bash.done
 # 	# ./configure in an MMU-enabled setup to avoid any nasty surprises
 # 	$(ARANYM_MMU)
 # 	sleep 7
-# 	$(SSH) mkdir /e/root/bash-minimal && cd /e/root/bash-minimal && /root/bash-minimal/$(CONFIGURE) --disable-nls --enable-minimal-config --enable-alias --enable-strict-posix-default
 # 	$(SSH) mkdir /e/root/bison && cd /e/root/bison && /root/bison/$(CONFIGURE) --disable-nls
 # 	$(SSH) mkdir /e/root/gawk && cd /e/root/gawk && /root/gawk/$(CONFIGURE) --disable-nls
 # 	$(SSH) mkdir /e/root/grep && cd /e/root/grep && /root/grep/$(CONFIGURE) --disable-nls
@@ -59,7 +54,6 @@ ssh: $(BUILD_DIR)/.setup.done $(BUILD_DIR)/.bash.done
 # 	-$(SSH) shutdown
 # 	sleep 7
 
-	# make && make install in a fastest possible way
 	#$(ARANYM_JIT)
 	#sleep 7
 	# fdlibm, mintbin, mintlib (mam to uz v /root) - ostatne cez cross cc
@@ -67,11 +61,6 @@ ssh: $(BUILD_DIR)/.setup.done $(BUILD_DIR)/.bash.done
 
 	#$(ARANYM_JIT)
 	#sleep 7
-	#$(SSH) "cd /e/root/bash-minimal && make && make install-strip DESTDIR=/e
-	# a bit hackish but this will ensure the safest ./configure environment for other packages
-	#$(SSH) "mv /e/bin/bash /e/bin/sh && rm /bin/sh && cp /e/bin/sh /bin/sh
-	#$(SSH) "cd /e/root/bash && make && make install-strip DESTDIR=/e
-	#$(SSH) "rm /bin/bash && cp /e/bin/bash /bin/bash
 	#$(SSH) "cd /e/root/gawk && make && make install-strip DESTDIR=/e
 	#$(SSH) "cd /e/root/grep && make && make install-strip DESTDIR=/e
 	#$(SSH) "cd /e/root/sed && make && make install-strip DESTDIR=/e
@@ -99,28 +88,51 @@ $(BUILD_DIR)/.setup.done:
 	-$(SSH_SHUTDOWN)
 	touch $@
 
-$(BUILD_DIR)/.bash.done: $(BUILD_DIR)/config.cache.bash
-	#mkdir -p $(BUILD_DIR)/bash
-	#cp $< $(BUILD_DIR)/bash/config.cache
-	#$(SED_CONFIG) $(BUILD_DIR)/bash/config.cache
+# ./configure in an MMU-enabled setup to avoid nasty surprises
 
-	#cd $(BUILD_DIR)/bash && $(SOURCES_DIR)/bash/$(BUILD_CONFIGURE) && make && make install-strip DESTDIR=$(BUILD_DIR)/bash-installed
-
-	#$(SSH) cp -r /h/build/bash-installed/* /f
-	$(ARANYM_JIT)
-
-	time $(SSH) cd /e/bash $(AND) make $(AND) make install-strip DESTDIR=/f
-
-	-$(SSH_SHUTDOWN)
-	touch $@
-
-# ./configure in an MMU-enabled setup to avoid any nasty surprises
-
-$(BUILD_DIR)/config.cache.bash:
+.PHONY: aranym-mmu
+aranym-mmu:
 	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
-	time $(SSH) rm -rf mkdir /e/bash $(AND) mkdir /e/bash $(AND) cd /e/bash $(AND) /root/bash/$(CONFIGURE) --disable-nls $(AND) cp config.cache /h/build/config.cache.bash
+
+.PHONY: configure
+configure: aranym-mmu $(BUILD_DIR)/.make.configured $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
 	-$(SSH_SHUTDOWN)
+
+$(BUILD_DIR)/.make.configured:
+	$(SSH) rm -rf /e/root/make $(AND) mkdir /e/root/make $(AND) cd /e/root/make $(AND) /root/make/$(CONFIGURE) --disable-nls
+	touch $@
+
+$(BUILD_DIR)/.sh.configured:
+	$(SSH) rm -rf /e/root/bash-minimal $(AND) mkdir -p /e/root/bash-minimal $(AND) cd /e/root/bash-minimal $(AND) /root/bash-minimal/$(CONFIGURE) --disable-nls --enable-minimal-config --enable-alias --enable-strict-posix-default
+	touch $@
+
+$(BUILD_DIR)/.bash.configured:
+	$(SSH) rm -rf /e/root/bash $(AND) mkdir -p /e/root/bash $(AND) cd /e/root/bash $(AND) /root/bash/$(CONFIGURE) --disable-nls
+	touch $@
+
+# make && make install in the fastest possible way
+
+.PHONY: aranym-jit
+aranym-jit:
+	mkdir -p $(BUILD_DIR)
+	$(ARANYM_JIT)
+
+.PHONY: build
+build: aranym-jit $(BUILD_DIR)/.make.done $(BUILD_DIR)/.sh.done $(BUILD_DIR)/.bash.done
+	-$(SSH_SHUTDOWN)
+
+$(BUILD_DIR)/.make.done:
+	$(SSH) cd /e/root/make $(AND) ./build.sh $(AND) ./make install-strip DESTDIR=/e
+	touch $@
+
+$(BUILD_DIR)/.sh.done:
+	$(SSH) cd /e/root/bash-minimal $(AND) make $(AND) make install-strip DESTDIR=/f $(AND) mv /f/bin/bash /f/bin/sh
+	touch $@
+
+$(BUILD_DIR)/.bash.done:
+	$(SSH) cd /e/root/bash $(AND) make $(AND) make install-strip DESTDIR=/f
+	touch $@
 
 ###############################################################################
 
@@ -220,6 +232,7 @@ gcc/.done: $(DOWNLOADS_DIR)/gcc.tar.bz2
 	touch $@
 
 $(HOST_DRIVE)/.mintbin.done: $(DOWNLOADS_DIR)/mintbin.tar.bz2
+	mkdir -p $(HOST_DRIVE)
 	cd $(HOST_DRIVE) && tar xjf $<
 	touch $@
 

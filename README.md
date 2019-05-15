@@ -1,7 +1,7 @@
 Bootstrap plan:
 - we need to create three drives:
 	1. Cross compiled binaries (hostfs drive with essential tools for running ./configure scripts)
-	2. Natively compiled binaries (ext2fs image for packages which need to be ./configure'd and/or install'ed natively)
+	2. Natively compiled binaries (ext2fs image for packages compiled natively and possibly installed to the final image)
 	3. Final image with only bash, openssh and opkg
 - install to the boot drive:
 	- emutos
@@ -24,7 +24,8 @@ Bootstrap plan:
 	- openssh (Vincent Riviere's build)
 	- perl (SpareMiNT)
 	- sed (SpareMiNT)
-- ssh to the host drive, ./configure and/or build on the native image, install to the final image (+create packages)
+- ssh to the host drive, ./configure and build on the native image, install to the final image (+create packages)
+	- make
 	- bash
 	- oldstuff (copy over for now)
 	- zlib (install only locally)
@@ -32,7 +33,7 @@ Bootstrap plan:
 	- openssh
 	- libarchive (install only locally)
 	- opkg
-- ssh to the host drive, ./configure and/or build on the native image, create essential packages:
+- apart from that, create essential packages:
 	- bison (needs new m4 installed)
 	- coreutils
 	- diffutils
