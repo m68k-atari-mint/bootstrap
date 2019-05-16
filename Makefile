@@ -33,6 +33,13 @@ default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(
 
 .PHONY: ssh
 ssh: $(BUILD_DIR)/.setup.done configure build
+# $(BUILD_DIR)/.make.configured:
+# 	$(SSH) rm -rf /e/root/make $(AND) mkdir -p /e/root/make $(AND) cd /e/root/make $(AND) /root/make/$(CONFIGURE) --disable-nls
+# 	touch $@
+# $(BUILD_DIR)/.make.done:
+# 	$(SSH) cd /e/root/make $(AND) ./build.sh $(AND) ./make install-strip DESTDIR=/e
+# 	touch $@
+#
 # 	# we need m4 for bison installed, SpareMiNT build is too old :-(
 # 	$(SSH) mkdir /e/root/m4 && cd /e/root/m4 && /root/m4/$(CONFIGURE)
 # 	-$(SSH) shutdown
@@ -96,12 +103,8 @@ aranym-mmu:
 	$(ARANYM_MMU)
 
 .PHONY: configure
-configure: aranym-mmu $(BUILD_DIR)/.make.configured $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
+configure: aranym-mmu $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
 	-$(SSH_SHUTDOWN)
-
-$(BUILD_DIR)/.make.configured:
-	$(SSH) rm -rf /e/root/make $(AND) mkdir -p /e/root/make $(AND) cd /e/root/make $(AND) /root/make/$(CONFIGURE) --disable-nls
-	touch $@
 
 $(BUILD_DIR)/.sh.configured:
 	$(SSH) rm -rf /e/root/bash-minimal $(AND) mkdir -p /e/root/bash-minimal $(AND) cd /e/root/bash-minimal $(AND) /root/bash-minimal/$(CONFIGURE) --disable-nls --enable-minimal-config --enable-alias --enable-strict-posix-default
@@ -119,12 +122,8 @@ aranym-jit:
 	$(ARANYM_JIT)
 
 .PHONY: build
-build: aranym-jit $(BUILD_DIR)/.make.done $(BUILD_DIR)/.sh.done $(BUILD_DIR)/.bash.done
+build: aranym-jit $(BUILD_DIR)/.sh.done $(BUILD_DIR)/.bash.done
 	-$(SSH_SHUTDOWN)
-
-$(BUILD_DIR)/.make.done:
-	$(SSH) cd /e/root/make $(AND) ./build.sh $(AND) ./make install-strip DESTDIR=/e
-	touch $@
 
 $(BUILD_DIR)/.sh.done:
 	$(SSH) cd /e/root/bash-minimal $(AND) make $(AND) make install-strip DESTDIR=/f $(AND) mv /f/bin/bash /f/bin/sh
@@ -143,7 +142,7 @@ aranym.config:
 $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.openssh.done \
 		binutils/.done gcc/.done $(HOST_DRIVE)/.mintbin.done $(HOST_DRIVE)/.mintlib.done $(HOST_DRIVE)/.fdlibm.done \
 		$(HOST_DRIVE)/.coreutils.done $(HOST_DRIVE)/.sed.done $(HOST_DRIVE)/.gawk.done $(HOST_DRIVE)/.grep.done $(HOST_DRIVE)/.diffutils.done \
-		$(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.m4.done $(HOST_DRIVE)/.perl.done $(HOST_DRIVE)/.hostname.done \
+		$(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.m4.done $(HOST_DRIVE)/.perl.done $(HOST_DRIVE)/.hostname.done $(HOST_DRIVE)/.make.done \
 		$(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/bison/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/gawk/.done \
 		$(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/libarchive/.done $(SOURCES_DIR)/m4/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/mintbin/.done \
 		$(SOURCES_DIR)/openssh/.done $(SOURCES_DIR)/openssl/.done $(SOURCES_DIR)/opkg/.done $(SOURCES_DIR)/sed/.done $(SOURCES_DIR)/zlib/.done
@@ -305,6 +304,11 @@ $(HOST_DRIVE)/.hostname.done: $(DOWNLOADS_DIR)/hostname.rpm
 	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
 
+$(HOST_DRIVE)/.make.done: $(DOWNLOADS_DIR)/make.tar.bz2
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && tar xjf $<
+	touch $@
+
 ###############################################################################
 
 $(SOURCES_DIR)/bash/.done: $(SOURCES_DIR)/bash.tar.gz
@@ -455,6 +459,10 @@ $(DOWNLOADS_DIR)/perl.rpm:
 $(DOWNLOADS_DIR)/hostname.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/hostname-2.07-1.m68kmint.rpm"
+
+$(DOWNLOADS_DIR)/make.tar.bz2:
+	mkdir -p $(DOWNLOADS_DIR)
+	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/make/make-4.0-bin-mint020-20131109.tar.bz2"
 
 ###############################################################################
 
