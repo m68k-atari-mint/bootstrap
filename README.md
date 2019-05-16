@@ -25,7 +25,6 @@ Bootstrap plan:
 	- perl (SpareMiNT)
 	- sed (SpareMiNT)
 - ssh to the host drive, ./configure and build on the native image, install to the final image (+create packages)
-	- make
 	- bash
 	- oldstuff (copy over for now)
 	- zlib (install only locally)

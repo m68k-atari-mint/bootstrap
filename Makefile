@@ -32,7 +32,7 @@ default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(
 ###############################################################################
 
 .PHONY: ssh
-ssh: $(BUILD_DIR)/.setup.done configure build
+ssh: $(BUILD_DIR)/.setup.done build
 # $(BUILD_DIR)/.make.configured:
 # 	$(SSH) rm -rf /e/root/make $(AND) mkdir -p /e/root/make $(AND) cd /e/root/make $(AND) /root/make/$(CONFIGURE) --disable-nls
 # 	touch $@
@@ -95,34 +95,77 @@ $(BUILD_DIR)/.setup.done:
 	-$(SSH_SHUTDOWN)
 	touch $@
 
+.PHONY: build
+build: configure1 build1 configure2 build2 configure3 build3
+
 # ./configure in an MMU-enabled setup to avoid nasty surprises
 
-.PHONY: aranym-mmu
-aranym-mmu:
+.aranym-mmu:
 	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
+	touch $@
 
-.PHONY: configure
-configure: aranym-mmu $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
+.PHONY: configure1
+configure1: .aranym-mmu $(BUILD_DIR)/.zlib.configured
+	-$(SSH_SHUTDOWN)
+	rm .aranym-mmu
+
+$(BUILD_DIR)/.zlib.configured:
+	$(SSH) rm -rf /e/root/zlib $(AND) mkdir -p /e/root/zlib $(AND) cd /e/root/zlib \
+		$(AND) export CFLAGS=\'-O2 -fomit-frame-pointer\' \
+		$(AND) /root/zlib/configure --prefix=/usr --eprefix=/ --static
+	touch $@
+
+.PHONY: configure2
+configure2: build1 .aranym-mmu $(BUILD_DIR)/.openssl.configured
 	-$(SSH_SHUTDOWN)
 
-$(BUILD_DIR)/.sh.configured:
-	$(SSH) rm -rf /e/root/bash-minimal $(AND) mkdir -p /e/root/bash-minimal $(AND) cd /e/root/bash-minimal $(AND) /root/bash-minimal/$(CONFIGURE) --disable-nls --enable-minimal-config --enable-alias --enable-strict-posix-default
+$(BUILD_DIR)/.openssl.configured:
+	$(SSH) rm -rf /e/root/openssl $(AND) mkdir -p /e/root/openssl $(AND) cd /e/root/openssl \
+		$(AND) ./Configure -DB_ENDIAN -DOPENSSL_USE_IPV6=0 -DDEVRANDOM=\'"/dev/urandom","/dev/random"\' -L\"/e/usr/lib\" -I\"/e/usr/include\" no-shared no-threads zlib --prefix=/usr gcc:gcc -O2 -fomit-frame-pointer
+	touch $@
+
+.PHONY: configure3
+configure3: build2 .aranym-mmu $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
+	-$(SSH_SHUTDOWN)
+
+$(BUILD_DIR)/.sh.configured: $(BUILD_DIR)/.bash.configured
+	$(SSH) rm -rf /e/root/bash-minimal $(AND) mkdir -p /e/root/bash-minimal $(AND) cd /e/root/bash-minimal \
+		$(AND) cp ../bash/config.cache . \
+		$(AND) /root/bash-minimal/$(CONFIGURE) --disable-nls --config-cache --enable-minimal-config --enable-alias --enable-strict-posix-default
 	touch $@
 
 $(BUILD_DIR)/.bash.configured:
-	$(SSH) rm -rf /e/root/bash $(AND) mkdir -p /e/root/bash $(AND) cd /e/root/bash $(AND) /root/bash/$(CONFIGURE) --disable-nls
+	$(SSH) rm -rf /e/root/bash $(AND) mkdir -p /e/root/bash $(AND) cd /e/root/bash \
+		$(AND) /root/bash/$(CONFIGURE) --disable-nls --config-cache
 	touch $@
 
 # make && make install in the fastest possible way
 
-.PHONY: aranym-jit
-aranym-jit:
+.aranym-jit:
 	mkdir -p $(BUILD_DIR)
 	$(ARANYM_JIT)
+	touch $@
 
-.PHONY: build
-build: aranym-jit $(BUILD_DIR)/.sh.done $(BUILD_DIR)/.bash.done
+.PHONY: build1
+build1: configure1 .aranym-jit $(BUILD_DIR)/.zlib.done
+	-$(SSH_SHUTDOWN)
+	rm .aranym-jit
+
+$(BUILD_DIR)/.zlib.done:
+	$(SSH) cd /e/root/zlib $(AND) make $(AND) make install DESTDIR=/e
+	touch $@
+
+.PHONY: build2
+build2: configure2 .aranym-jit $(BUILD_DIR)/.openssl.done
+	-$(SSH_SHUTDOWN)
+
+$(BUILD_DIR)/.openssl.done:
+	$(SSH) cd /e/root/openssl $(AND) make $(AND) make install INSTALL_PREFIX=/e
+	touch $@
+
+.PHONY: build3
+build3: configure3 .aranym-jit $(BUILD_DIR)/.sh.done $(BUILD_DIR)/.bash.done
 	-$(SSH_SHUTDOWN)
 
 $(BUILD_DIR)/.sh.done:
