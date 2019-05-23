@@ -400,7 +400,11 @@ setenv SHELL   /bin/bash
 # Otherwise, if your init program is not GEM, you should use INIT= as
 # follows:
 
-INIT=/usr/sbin/sshd -r -D
+exec /usr/bin/cp /bin/bash /ram/bash
+exec /usr/bin/chmod +x /ram/bash
+
+INIT=/usr/sbin/sshd -r -D -E /h/sshd.log -o LogLevel=DEBUG
+#INIT=/bin/bash
 
 # If you leave both commands above commented out, the MiNT will
 # attempt to execute a file called `sh.tos' found in the system

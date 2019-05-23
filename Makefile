@@ -19,20 +19,23 @@ TOOLS_DIR	:= $(PWD)/tools
 WGET		:= wget -q --no-check-certificate -O
 RPM_EXTRACT	:= $(PWD)/rpm_extract.sh
 CONFIGURE	:= configure CFLAGS=\'-O2 -fomit-frame-pointer\' --prefix=/usr --exec-prefix=/
-ARANYM_JIT	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-jit -c aranym.config 2> /dev/null && sleep 7 &
-ARANYM_MMU	:= SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy aranym-mmu -c aranym.config 2> /dev/null && sleep 7 &
+ARANYM_JIT	:= $(PWD)/aranym-jit.sh
+ARANYM_MMU	:= $(PWD)/aranym-mmu.sh
 SSH		:= ssh root@192.168.251.2 source /etc/profile\;
 AND		:= \&\&
-SSH_SHUTDOWN	:= $(SSH) shutdown; sleep 7
 
 ###############################################################################
 
-default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(FINAL_IMAGE) aranym.config ssh
+default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(FINAL_IMAGE) aranym.config setup_build build
+
+.PHONY: setup_build
+setup_build: $(BUILD_DIR)/.setup.done
+
+.PHONY: build
+build: configure1 build1 configure2 build2 configure3 build3
 
 ###############################################################################
 
-.PHONY: ssh
-ssh: $(BUILD_DIR)/.setup.done build
 # $(BUILD_DIR)/.make.configured:
 # 	$(SSH) rm -rf /e/root/make $(AND) mkdir -p /e/root/make $(AND) cd /e/root/make $(AND) /root/make/$(CONFIGURE) --disable-nls
 # 	touch $@
@@ -92,87 +95,71 @@ $(BUILD_DIR)/.setup.done:
 	$(SSH) mkdir -p /f/var/run $(AND) touch /f/var/run/utmp
 	$(SSH) mkdir -p /f/root/.ssh $(AND) cp /root/.ssh/authorized_keys /f/root/.ssh $(AND) chmod 700 /f/root/.ssh $(AND) chmod 600 /f/root/.ssh/authorized_keys
 
-	-$(SSH_SHUTDOWN)
 	touch $@
 
-.PHONY: build
-build: configure1 build1 configure2 build2 configure3 build3
-
+.PHONY: aranym-mmu aranym-jit
 # ./configure in an MMU-enabled setup to avoid nasty surprises
-
-.aranym-mmu:
+aranym-mmu:
 	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
-	touch $@
+# make && make install in the fastest possible way
+aranym-jit:
+	mkdir -p $(BUILD_DIR)
+	$(ARANYM_JIT)
 
 .PHONY: configure1
-configure1: .aranym-mmu $(BUILD_DIR)/.zlib.configured
-	-$(SSH_SHUTDOWN)
-	rm .aranym-mmu
+configure1: $(BUILD_DIR)/.zlib.configured
 
-$(BUILD_DIR)/.zlib.configured:
+$(BUILD_DIR)/.zlib.configured: aranym-mmu
 	$(SSH) rm -rf /e/root/zlib $(AND) mkdir -p /e/root/zlib $(AND) cd /e/root/zlib \
 		$(AND) export CFLAGS=\'-O2 -fomit-frame-pointer\' \
 		$(AND) /root/zlib/configure --prefix=/usr --eprefix=/ --static
 	touch $@
 
 .PHONY: configure2
-configure2: build1 .aranym-mmu $(BUILD_DIR)/.openssl.configured
-	-$(SSH_SHUTDOWN)
+configure2: build1 $(BUILD_DIR)/.openssl.configured
 
-$(BUILD_DIR)/.openssl.configured:
+$(BUILD_DIR)/.openssl.configured: aranym-mmu
 	$(SSH) rm -rf /e/root/openssl $(AND) mkdir -p /e/root/openssl $(AND) cd /e/root/openssl \
 		$(AND) ./Configure -DB_ENDIAN -DOPENSSL_USE_IPV6=0 -DDEVRANDOM=\'"/dev/urandom","/dev/random"\' -L\"/e/usr/lib\" -I\"/e/usr/include\" no-shared no-threads zlib --prefix=/usr gcc:gcc -O2 -fomit-frame-pointer
 	touch $@
 
 .PHONY: configure3
-configure3: build2 .aranym-mmu $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
-	-$(SSH_SHUTDOWN)
+configure3: build2 $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
 
-$(BUILD_DIR)/.sh.configured: $(BUILD_DIR)/.bash.configured
+$(BUILD_DIR)/.sh.configured: $(BUILD_DIR)/.bash.configured aranym-mmu
 	$(SSH) rm -rf /e/root/bash-minimal $(AND) mkdir -p /e/root/bash-minimal $(AND) cd /e/root/bash-minimal \
 		$(AND) cp ../bash/config.cache . \
 		$(AND) /root/bash-minimal/$(CONFIGURE) --disable-nls --config-cache --enable-minimal-config --enable-alias --enable-strict-posix-default
 	touch $@
 
-$(BUILD_DIR)/.bash.configured:
+$(BUILD_DIR)/.bash.configured: aranym-mmu
 	$(SSH) rm -rf /e/root/bash $(AND) mkdir -p /e/root/bash $(AND) cd /e/root/bash \
 		$(AND) /root/bash/$(CONFIGURE) --disable-nls --config-cache
 	touch $@
 
-# make && make install in the fastest possible way
-
-.aranym-jit:
-	mkdir -p $(BUILD_DIR)
-	$(ARANYM_JIT)
-	touch $@
-
 .PHONY: build1
-build1: configure1 .aranym-jit $(BUILD_DIR)/.zlib.done
-	-$(SSH_SHUTDOWN)
-	rm .aranym-jit
+build1: configure1 $(BUILD_DIR)/.zlib.done
 
-$(BUILD_DIR)/.zlib.done:
+$(BUILD_DIR)/.zlib.done: aranym-jit
 	$(SSH) cd /e/root/zlib $(AND) make $(AND) make install DESTDIR=/e
 	touch $@
 
 .PHONY: build2
-build2: configure2 .aranym-jit $(BUILD_DIR)/.openssl.done
-	-$(SSH_SHUTDOWN)
+build2: configure2 $(BUILD_DIR)/.openssl.done
 
-$(BUILD_DIR)/.openssl.done:
+$(BUILD_DIR)/.openssl.done: aranym-jit
 	$(SSH) cd /e/root/openssl $(AND) make $(AND) make install INSTALL_PREFIX=/e
 	touch $@
 
 .PHONY: build3
-build3: configure3 .aranym-jit $(BUILD_DIR)/.sh.done $(BUILD_DIR)/.bash.done
-	-$(SSH_SHUTDOWN)
+build3: configure3 $(BUILD_DIR)/.sh.done $(BUILD_DIR)/.bash.done
 
-$(BUILD_DIR)/.sh.done:
+$(BUILD_DIR)/.sh.done: aranym-jit
 	$(SSH) cd /e/root/bash-minimal $(AND) make $(AND) make install-strip DESTDIR=/f $(AND) mv /f/bin/bash /f/bin/sh
 	touch $@
 
-$(BUILD_DIR)/.bash.done:
+$(BUILD_DIR)/.bash.done: aranym-jit
 	$(SSH) cd /e/root/bash $(AND) make $(AND) make install-strip DESTDIR=/f
 	touch $@
 
