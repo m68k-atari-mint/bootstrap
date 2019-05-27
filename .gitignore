@@ -13,3 +13,6 @@ binutils/
 gcc/
 fdlibm-src/
 mintlib-src/
+.aranym-mmu
+.aranym-jit
+sshd.log

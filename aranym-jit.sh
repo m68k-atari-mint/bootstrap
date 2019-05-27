@@ -1,8 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 
 ARANYM_IP=192.168.251.2
-#ARANYM_JIT="aranym-jit.exe --fixedmem 0x9a000000"
-ARANYM_JIT=aranym-jit
+if [[ $(uname -r) =~ Microsoft$ ]]
+then
+	ARANYM_JIT="aranym-jit.exe --fixedmem 0x9a000000"
+else
+	ARANYM_JIT=aranym-jit
+fi
 
 if [ ! -f .aranym-jit ]
 then

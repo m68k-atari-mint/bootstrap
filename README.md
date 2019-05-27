@@ -26,6 +26,7 @@ Bootstrap plan:
 	- openssh (Vincent Riviere's build)
 	- perl (SpareMiNT)
 	- sed (SpareMiNT)
+	- texinfo (SpareMiNT)
 - ssh to the host drive, ./configure and build on the native image, install to the final image (+create packages)
 	- bash
 	- oldstuff (copy over for now)
@@ -45,6 +46,7 @@ Bootstrap plan:
 	- make
 	- mintbin
 	- sed
+	- texinfo 4.13 (later versions need perl >= 5.7.3; need by some 'make install'; requires one of: ncurses curses termlib termcap terminfo)
 - (later...):
 	- binutils (just package it for now)
 	- fdlibm (can be 100% cross compiled & packaged)
