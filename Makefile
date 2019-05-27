@@ -97,20 +97,14 @@ $(BUILD_DIR)/.setup.done:
 
 	touch $@
 
-.PHONY: aranym-mmu aranym-jit
 # ./configure in an MMU-enabled setup to avoid nasty surprises
-aranym-mmu:
-	mkdir -p $(BUILD_DIR)
-	$(ARANYM_MMU)
-# make && make install in the fastest possible way
-aranym-jit:
-	mkdir -p $(BUILD_DIR)
-	$(ARANYM_JIT)
 
 .PHONY: configure1
 configure1: $(BUILD_DIR)/.zlib.configured
 
-$(BUILD_DIR)/.zlib.configured: aranym-mmu
+$(BUILD_DIR)/.zlib.configured:
+	mkdir -p $(BUILD_DIR)
+	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/zlib $(AND) mkdir -p /e/root/zlib $(AND) cd /e/root/zlib \
 		$(AND) export CFLAGS=\'-O2 -fomit-frame-pointer\' \
 		$(AND) /root/zlib/configure --prefix=/usr --eprefix=/ --static
@@ -119,47 +113,56 @@ $(BUILD_DIR)/.zlib.configured: aranym-mmu
 .PHONY: configure2
 configure2: build1 $(BUILD_DIR)/.openssl.configured
 
-$(BUILD_DIR)/.openssl.configured: aranym-mmu
+$(BUILD_DIR)/.openssl.configured:
+	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/openssl $(AND) cp -ra /d/root/openssl /e/root/openssl $(AND) cd /e/root/openssl \
-		$(AND) ./Configure -DB_ENDIAN -DOPENSSL_USE_IPV6=0 -DDEVRANDOM=\\\"/dev/urandom\\\",\\\"/dev/random\\\" -L\"/e/usr/lib\" -I\"/e/usr/include\" no-shared no-threads zlib --prefix=/usr gcc:gcc -O2 -fomit-frame-pointer
+		$(AND) ./Configure -DB_ENDIAN -DOPENSSL_USE_IPV6=0 -DDEVRANDOM=\\\"/dev/urandom\\\",\\\"/dev/random\\\" -L/e/usr/lib -I/e/usr/include no-shared no-threads zlib --prefix=/usr gcc:gcc -O2 -fomit-frame-pointer
 	touch $@
 
 .PHONY: configure3
 configure3: build2 $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
 
-$(BUILD_DIR)/.sh.configured: $(BUILD_DIR)/.bash.configured aranym-mmu
+$(BUILD_DIR)/.sh.configured: $(BUILD_DIR)/.bash.configured
+	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/bash-minimal $(AND) mkdir -p /e/root/bash-minimal $(AND) cd /e/root/bash-minimal \
 		$(AND) cp ../bash/config.cache . \
 		$(AND) /root/bash-minimal/$(CONFIGURE) --disable-nls --config-cache --enable-minimal-config --enable-alias --enable-strict-posix-default
 	touch $@
 
-$(BUILD_DIR)/.bash.configured: aranym-mmu
+$(BUILD_DIR)/.bash.configured:
+	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/bash $(AND) mkdir -p /e/root/bash $(AND) cd /e/root/bash \
 		$(AND) /root/bash/$(CONFIGURE) --disable-nls --config-cache
 	touch $@
 
+# make && make install in the fastest possible way
+
 .PHONY: build1
 build1: configure1 $(BUILD_DIR)/.zlib.done
 
-$(BUILD_DIR)/.zlib.done: aranym-jit
+$(BUILD_DIR)/.zlib.done:
+	$(ARANYM_JIT)
 	$(SSH) cd /e/root/zlib $(AND) make $(AND) make install DESTDIR=/e
 	touch $@
 
 .PHONY: build2
 build2: configure2 $(BUILD_DIR)/.openssl.done
 
-$(BUILD_DIR)/.openssl.done: aranym-jit
+$(BUILD_DIR)/.openssl.done:
+	$(ARANYM_JIT)
 	$(SSH) cd /e/root/openssl $(AND) make $(AND) make install INSTALL_PREFIX=/e
 	touch $@
 
 .PHONY: build3
 build3: configure3 $(BUILD_DIR)/.sh.done $(BUILD_DIR)/.bash.done
 
-$(BUILD_DIR)/.sh.done: aranym-jit
+$(BUILD_DIR)/.sh.done:
+	$(ARANYM_JIT)
 	$(SSH) cd /e/root/bash-minimal $(AND) make $(AND) make install-strip DESTDIR=/f $(AND) mv /f/bin/bash /f/bin/sh
 	touch $@
 
-$(BUILD_DIR)/.bash.done: aranym-jit
+$(BUILD_DIR)/.bash.done:
+	$(ARANYM_JIT)
 	$(SSH) cd /e/root/bash $(AND) make $(AND) make install-strip DESTDIR=/f
 	touch $@
 
