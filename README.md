@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/m68k-atari-mint/bootstrap.svg?branch=master)](https://travis-ci.org/m68k-atari-mint/bootstrap)
+
 Bootstrap plan:
 - we need to create three drives:
 	1. Cross compiled binaries (hostfs drive with essential tools for running ./configure scripts)
