@@ -120,8 +120,8 @@ $(BUILD_DIR)/.zlib.configured: aranym-mmu
 configure2: build1 $(BUILD_DIR)/.openssl.configured
 
 $(BUILD_DIR)/.openssl.configured: aranym-mmu
-	$(SSH) rm -rf /e/root/openssl $(AND) mkdir -p /e/root/openssl $(AND) cd /e/root/openssl \
-		$(AND) ./Configure -DB_ENDIAN -DOPENSSL_USE_IPV6=0 -DDEVRANDOM=\'"/dev/urandom","/dev/random"\' -L\"/e/usr/lib\" -I\"/e/usr/include\" no-shared no-threads zlib --prefix=/usr gcc:gcc -O2 -fomit-frame-pointer
+	$(SSH) rm -rf /e/root/openssl $(AND) cp -ra /d/root/openssl /e/root/openssl $(AND) cd /e/root/openssl \
+		$(AND) ./Configure -DB_ENDIAN -DOPENSSL_USE_IPV6=0 -DDEVRANDOM=\\\"/dev/urandom\\\",\\\"/dev/random\\\" -L\"/e/usr/lib\" -I\"/e/usr/include\" no-shared no-threads zlib --prefix=/usr gcc:gcc -O2 -fomit-frame-pointer
 	touch $@
 
 .PHONY: configure3
