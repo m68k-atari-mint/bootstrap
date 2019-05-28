@@ -111,14 +111,20 @@ $(BUILD_DIR)/.zlib.configured:
 	touch $@
 
 .PHONY: configure2
-configure2: build1 $(BUILD_DIR)/.openssl.configured
+configure2: build1 $(BUILD_DIR)/.openssl.configured  $(BUILD_DIR)/.texinfo.configured
 
 $(BUILD_DIR)/.openssl.configured:
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/openssl $(AND) cp -ra /d/root/openssl /e/root/openssl $(AND) cd /e/root/openssl \
-		$(AND) ./Configure -DB_ENDIAN -DOPENSSL_USE_IPV6=0 -DDEVRANDOM=\\\"/dev/urandom\\\",\\\"/dev/random\\\" -L/e/lib -I/e/usr/include no-shared no-threads zlib --prefix=/usr gcc:gcc -O2 -fomit-frame-pointer
+		$(AND) ./Configure -DB_ENDIAN -DOPENSSL_USE_IPV6=0 -DDEVRANDOM=\\\"/dev/urandom\\\",\\\"/dev/random\\\" -L/e/lib -I/e/usr/include no-shared no-threads no-makedepend no-unit-test no-tests zlib --prefix=/usr gcc:gcc -O2 -fomit-frame-pointer
 	touch $@
 
+$(BUILD_DIR)/.texinfo.configured:
+	$(ARANYM_MMU)
+	$(SSH) rm -rf /e/root/texinfo $(AND) mkdir -p /e/root/texinfo $(AND) cd /e/root/texinfo \
+		$(AND) /root/texinfo/$(CONFIGURE) --disable-nls
+	touch $@
+	
 .PHONY: configure3
 configure3: build2 $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
 
@@ -146,11 +152,16 @@ $(BUILD_DIR)/.zlib.done:
 	touch $@
 
 .PHONY: build2
-build2: configure2 $(BUILD_DIR)/.openssl.done
+build2: configure2 $(BUILD_DIR)/.openssl.done $(BUILD_DIR)/.texinfo.done
 
 $(BUILD_DIR)/.openssl.done:
 	$(ARANYM_JIT)
-	$(SSH) cd /e/root/openssl $(AND) make $(AND) make install INSTALL_PREFIX=/e
+	$(SSH) cd /e/root/openssl $(AND) make $(AND) make install_sw INSTALL_PREFIX=/e
+	touch $@
+	
+$(BUILD_DIR)/.texinfo.done:
+	$(ARANYM_JIT)
+	$(SSH) cd /e/root/texinfo $(AND) make $(AND) make install-strip DESTDIR=/e
 	touch $@
 
 .PHONY: build3
@@ -175,10 +186,10 @@ aranym.config:
 $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.openssh.done \
 		binutils/.done gcc/.done $(HOST_DRIVE)/.mintbin.done $(HOST_DRIVE)/.mintlib.done $(HOST_DRIVE)/.fdlibm.done \
 		$(HOST_DRIVE)/.coreutils.done $(HOST_DRIVE)/.sed.done $(HOST_DRIVE)/.gawk.done $(HOST_DRIVE)/.grep.done $(HOST_DRIVE)/.diffutils.done \
-		$(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.m4.done $(HOST_DRIVE)/.perl.done $(HOST_DRIVE)/.hostname.done $(HOST_DRIVE)/.make.done $(HOST_DRIVE)/.texinfo.done \
+		$(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.m4.done $(HOST_DRIVE)/.perl.done $(HOST_DRIVE)/.hostname.done $(HOST_DRIVE)/.make.done $(HOST_DRIVE)/.ncurses.done \
 		$(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/bison/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/gawk/.done \
 		$(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/libarchive/.done $(SOURCES_DIR)/m4/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/mintbin/.done \
-		$(SOURCES_DIR)/openssh/.done $(SOURCES_DIR)/openssl/.done $(SOURCES_DIR)/opkg/.done $(SOURCES_DIR)/sed/.done $(SOURCES_DIR)/zlib/.done
+		$(SOURCES_DIR)/openssh/.done $(SOURCES_DIR)/openssl/.done $(SOURCES_DIR)/opkg/.done $(SOURCES_DIR)/sed/.done $(SOURCES_DIR)/texinfo/.done $(SOURCES_DIR)/zlib/.done
 	mkdir -p $(HOST_DRIVE)/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var}
 
 	cp -ra $(CONFIG_DIR)/{etc,var} $(HOST_DRIVE)
@@ -202,6 +213,7 @@ $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.open
 	cp -ra $(SOURCES_DIR)/openssl $(HOST_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/opkg $(HOST_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/sed $(HOST_DRIVE)/root
+	cp -ra $(SOURCES_DIR)/texinfo $(HOST_DRIVE)/root
 	cp -ra $(SOURCES_DIR)/zlib $(HOST_DRIVE)/root
 
 	# no clue what is this about but it doesn't work
@@ -342,9 +354,9 @@ $(HOST_DRIVE)/.make.done: $(DOWNLOADS_DIR)/make.tar.bz2
 	cd $(HOST_DRIVE) && tar xjf $<
 	touch $@
 
-$(HOST_DRIVE)/.texinfo.done: $(DOWNLOADS_DIR)/texinfo.rpm
+$(HOST_DRIVE)/.ncurses.done: $(DOWNLOADS_DIR)/ncurses.rpm $(DOWNLOADS_DIR)/ncurses-devel.rpm
 	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $(DOWNLOADS_DIR)/ncurses.rpm && $(RPM_EXTRACT) $(DOWNLOADS_DIR)/ncurses-devel.rpm
 	touch $@
 
 ###############################################################################
@@ -416,6 +428,10 @@ $(SOURCES_DIR)/sed/.done: $(SOURCES_DIR)/sed.tar.xz
 	cd $(SOURCES_DIR) && tar xJf $< && mv sed-* "sed"
 	touch $@
 
+$(SOURCES_DIR)/texinfo/.done: $(SOURCES_DIR)/texinfo.tar.gz
+	cd $(SOURCES_DIR) && tar xzf $< && mv texinfo-* "texinfo"
+	touch $@
+
 $(SOURCES_DIR)/zlib/.done: $(SOURCES_DIR)/zlib.tar.xz
 	cd $(SOURCES_DIR) && tar xJf $< && mv zlib-* "zlib"
 	touch $@
@@ -424,7 +440,7 @@ $(SOURCES_DIR)/zlib/.done: $(SOURCES_DIR)/zlib.tar.xz
 
 $(DOWNLOADS_DIR)/emutos.zip:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "http://downloads.sourceforge.net/project/emutos/snapshots/20190505-153546-7d0cad1/emutos-aranym-20190505-153546-7d0cad1.zip"
+	$(WGET) $@ "http://downloads.sourceforge.net/project/emutos/snapshots/20190527-231755-840026f/emutos-aranym-20190527-231755-840026f.zip"
 
 $(DOWNLOADS_DIR)/freemint.zip:
 	mkdir -p $(DOWNLOADS_DIR)
@@ -502,9 +518,13 @@ $(DOWNLOADS_DIR)/make.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "http://vincent.riviere.free.fr/soft/m68k-atari-mint/archives/mint/make/make-4.0-bin-mint020-20131109.tar.bz2"
 
-$(DOWNLOADS_DIR)/texinfo.rpm:
+$(DOWNLOADS_DIR)/ncurses.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/texinfo-4.0-2.m68kmint.rpm"
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/ncurses-5.1-1.m68kmint.rpm"
+	
+$(DOWNLOADS_DIR)/ncurses-devel.rpm:
+	mkdir -p $(DOWNLOADS_DIR)
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/ncurses-devel-5.1-1.m68kmint.rpm"
 
 ###############################################################################
 
@@ -571,6 +591,11 @@ $(SOURCES_DIR)/opkg.tar.gz:
 $(SOURCES_DIR)/sed.tar.xz:
 	mkdir -p $(SOURCES_DIR)
 	$(WGET) $@ "https://ftp.gnu.org/gnu/sed/sed-4.7.tar.xz"
+	
+$(SOURCES_DIR)/texinfo.tar.gz:
+	mkdir -p $(SOURCES_DIR)
+	# texinfo >= 5.0 requires perl >= 5.7.3
+	$(WGET) $@ "https://ftp.gnu.org/gnu/texinfo/texinfo-4.13.tar.gz"
 
 $(SOURCES_DIR)/zlib.tar.xz:
 	mkdir -p $(SOURCES_DIR)
@@ -590,7 +615,7 @@ clean: driveclean
 	rm -f aranym.config
 	rm -rf emutos oldstuff binutils gcc
 	rm -rf mintlib-src fdlibm-src
-	rm -rf $(SOURCES_DIR)/{bash,bison,coreutils,diffutils,fdlibm,gawk,grep,libarchive,m4,make,mintbin,mintlib,openssh,openssl,opkg,sed,zlib}
+	rm -rf $(SOURCES_DIR)/{bash,bison,coreutils,diffutils,fdlibm,gawk,grep,libarchive,m4,make,mintbin,mintlib,openssh,openssl,opkg,sed,texinfo,zlib}
 
 .PHONY: distclean
 distclean: clean
