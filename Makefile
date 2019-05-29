@@ -47,10 +47,12 @@ $(BUILD_DIR)/.setup.done:
 	$(SSH) mkdir -p /f/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var,var/log,var/run}
 	$(SSH) cp -a /sbin/shutdown /f/sbin/shutdown
 	$(SSH) cp -a /etc/{group,hostname,passwd} /f/etc
+	# TODO: replace /f/etc/passwd with /var/empty entry
 	$(SSH) cp -a /etc/profile.target /f/etc/profile
 	$(SSH) touch /f/etc/utmp
 	$(SSH) touch /f/var/log/lastlog
 	$(SSH) touch /f/var/run/utmp
+	$(SSH) mkdir -p /f/var/empty
 	$(SSH) mkdir -p /f/root/.ssh $(AND) cp /root/.ssh/authorized_keys /f/root/.ssh $(AND) chmod 700 /f/root/.ssh $(AND) chmod 600 /f/root/.ssh/authorized_keys
 
 	touch $@
@@ -146,11 +148,12 @@ build4: configure4 $(BUILD_DIR)/.openssh.done $(BUILD_DIR)/.opkg.done $(BUILD_DI
 
 $(BUILD_DIR)/.openssh.done:
 	$(ARANYM_JIT)
-	$(SSH) cd /e/root/openssh $(AND) make $(AND) make install-strip DESTDIR=/f \
-		$(AND) /f/bin/ssh-keygen -t rsa -f /f/etc/ssh/ssh_host_rsa_key -q -N ""
-		$(AND) /f/bin/ssh-keygen -t dsa -f /f/etc/ssh/ssh_host_dsa_key -q -N ""
-		$(AND) /f/bin/ssh-keygen -t ecdsa  -f /f/etc/ssh/ssh_host_ecdsa_key -q -N ""
-		$(AND) mkdir -p /f/var/empty $(AND) groupadd sshd $(AND) useradd -g sshd -c \'sshd privsep\' -d /var/empty -s /bin/false sshd
+	$(SSH) cd /e/root/openssh $(AND) make \
+		$(AND) ./ssh-keygen -t rsa -f /f/etc/ssh/ssh_host_rsa_key -q -N "" \
+		$(AND) ./ssh-keygen -t dsa -f /f/etc/ssh/ssh_host_dsa_key -q -N "" \
+		$(AND) ./ssh-keygen -t ecdsa  -f /f/etc/ssh/ssh_host_ecdsa_key -q -N "" \
+		$(AND) mkdir -p /f/var/empty $(AND) groupadd sshd $(AND) useradd -g sshd -c \'sshd privsep\' -d /var/empty -s /bin/false sshd $(AND) chown root:root /f/var/empty \
+		$(AND) make install DESTDIR=/f
 	touch $@
 	
 $(BUILD_DIR)/.opkg.done:

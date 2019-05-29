@@ -28,5 +28,5 @@ install:
 script:
     - unset CC
     - unset CXX
-    - ssh-keygen -t rsa -q -N ""
+    - mkdir -p ~/.ssh && ssh-keygen -t rsa -f ~/.ssh/id_rsa -q -N ""
     - make
