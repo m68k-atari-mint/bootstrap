@@ -26,15 +26,16 @@ Bootstrap plan:
 	- openssh (Vincent Riviere's build)
 	- perl (SpareMiNT)
 	- sed (SpareMiNT)
+	- shadow-utils (SpareMiNT)
 	- texinfo (SpareMiNT)
 - ssh to the host drive, ./configure and build on the native image, install to the final image (+create packages)
-	- bash
-	- oldstuff (copy over for now)
 	- zlib (install only locally)
 	- openssl (install only locally)
-	- openssh
 	- libarchive (install only locally)
+	- openssh
 	- opkg
+	- bash
+	- oldstuff (copy `shutdown` over for now)
 - apart from that, create essential packages:
 	- bison (needs new m4 installed)
 	- coreutils

@@ -31,3 +31,6 @@ export TMPDIR
 
 STACKSIZE=500000
 export STACKSIZE
+
+OPENSSL_CONF=/f/usr/ssl/openssl.cnf
+export OPENSSL_CONF
