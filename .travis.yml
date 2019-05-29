@@ -9,6 +9,7 @@ addons:
       - sourceline: 'ppa:vriviere/ppa'
     packages:
       - aranym
+      - rpm2cpio
       - uml-utilities
       - binutils-m68k-atari-mint
       - gcc-m68k-atari-mint
@@ -25,6 +26,7 @@ install:
     #- sudo echo 1 > /proc/sys/net/ipv4/ip_forward
 
 script:
-    - aranym-mmu --version
-    - aranym-jit --version
-
+    - unset CC
+    - unset CXX
+    - ssh-keygen -t rsa -q -N ""
+    - make
