@@ -29,15 +29,16 @@ AND		:= \&\&
 
 ###############################################################################
 
-default: emutos/.done $(BOOT_DRIVE)/.done $(HOST_IMAGE) $(TARGET_IMAGE) $(FINAL_IMAGE) aranym.config setup_build build
-
-.PHONY: setup_build
-setup_build: $(BUILD_DIR)/.setup.done
+.PHONY: prepare
+prepare: emutos/.done $(BOOT_DRIVE)/.done $(HOST_IMAGE) $(TARGET_IMAGE) $(FINAL_IMAGE) aranym.config setup_build
 
 .PHONY: build
 build: configure1 build1 configure2 build2 configure3 build3 configure4 build4
 
 ###############################################################################
+
+.PHONY: setup_build
+setup_build: $(BUILD_DIR)/.setup.done
 
 $(BUILD_DIR)/.setup.done:
 	mkdir -p $(BUILD_DIR)
@@ -100,7 +101,7 @@ $(BUILD_DIR)/.openssh.configured:
 $(BUILD_DIR)/.opkg.configured:
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/opkg $(AND) mkdir -p /e/root/opkg $(AND) cd /e/root/opkg \
-		$(AND) export LIBARCHIVE_CFLAGS=\'-I/e/usr/include\' $(AND) LIBARCHIVE_LIBS=\'-L/e/usr/lib -larchive\' \
+		$(AND) export LIBARCHIVE_CFLAGS=\'-I/e/usr/include\' $(AND) export LIBARCHIVE_LIBS=\'-L/e/usr/lib -larchive\' \
 		$(AND) /root/opkg/$(CONFIGURE) --disable-curl --disable-gpg
 	touch $@
 	

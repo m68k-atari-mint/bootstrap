@@ -22,4 +22,8 @@ script:
     - unset CC
     - unset CXX
     - mkdir -p ~/.ssh && ssh-keygen -t rsa -f ~/.ssh/id_rsa -q -N ""
-    - make
+    - make prepare
+    - make configure1 build1
+    - make configure2 build2
+    - make configure3 build3
+    - make configure4 build4
