@@ -89,7 +89,7 @@ $(BUILD_DIR)/.libarchive.configured:
 		$(AND) /root/libarchive/configure CFLAGS=\'-O2 -fomit-frame-pointer -I/e/usr/include\' LDFLAGS=\'-L/e/usr/lib\' --prefix=/usr
 	touch $@
 
-.PHONY: configure4	
+.PHONY: configure4
 configure4: build3 $(BUILD_DIR)/.openssh.configured $(BUILD_DIR)/.opkg.configured $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
 
 $(BUILD_DIR)/.openssh.configured:
@@ -97,14 +97,14 @@ $(BUILD_DIR)/.openssh.configured:
 	$(SSH) rm -rf /e/root/openssh $(AND) mkdir -p /e/root/openssh $(AND) cd /e/root/openssh \
 		$(AND) /root/openssh/$(CONFIGURE) --sysconfdir=/etc/ssh --with-zlib=/e/usr --with-ssl-dir=/e/usr ac_cv_member_struct_stat_st_mtim=no
 	touch $@
-	
+
 $(BUILD_DIR)/.opkg.configured:
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/opkg $(AND) mkdir -p /e/root/opkg $(AND) cd /e/root/opkg \
 		$(AND) export LIBARCHIVE_CFLAGS=\'-I/e/usr/include\' $(AND) export LIBARCHIVE_LIBS=\'-L/e/usr/lib -larchive\' \
 		$(AND) /root/opkg/$(CONFIGURE) --disable-curl --disable-gpg
 	touch $@
-	
+
 $(BUILD_DIR)/.sh.configured: $(BUILD_DIR)/.bash.configured
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/bash-minimal $(AND) mkdir -p /e/root/bash-minimal $(AND) cd /e/root/bash-minimal \
@@ -152,11 +152,11 @@ $(BUILD_DIR)/.openssh.done:
 	$(SSH) cd /e/root/openssh $(AND) make \
 		$(AND) mkdir -p /f/etc/ssh \
 		$(AND) ./ssh-keygen -t rsa -f /f/etc/ssh/ssh_host_rsa_key -q -N \"\" \
-		$(AND) ./ssh-keygen -t dsa -f /f/etc/ssh/ssh_host_dsa_key -q -N \"\" \
-		$(AND) ./ssh-keygen -t ecdsa  -f /f/etc/ssh/ssh_host_ecdsa_key -q -N \"\" \
+		$(AND) ./ssh-keygen -t ecdsa -f /f/etc/ssh/ssh_host_ecdsa_key -q -N \"\" \
+		$(AND) ./ssh-keygen -t ed25519 -f /f/etc/ssh/ssh_host_ed25519_key -q -N \"\" \
 		$(AND) make install DESTDIR=/f
 	touch $@
-	
+
 $(BUILD_DIR)/.opkg.done:
 	$(ARANYM_JIT)
 	$(SSH) cd /e/root/opkg $(AND) make $(AND) make install-strip DESTDIR=/f
@@ -370,7 +370,7 @@ $(HOST_DRIVE)/.shadow-utils.done: $(DOWNLOADS_DIR)/shadow-utils.rpm
 	mkdir -p $(HOST_DRIVE)
 	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
-	
+
 ###############################################################################
 
 $(SOURCES_DIR)/bash/.done: $(SOURCES_DIR)/bash.tar.gz
@@ -430,6 +430,7 @@ $(SOURCES_DIR)/openssh/.done: $(SOURCES_DIR)/openssh.tar.gz
 
 $(SOURCES_DIR)/openssl/.done: $(SOURCES_DIR)/openssl.tar.gz
 	cd $(SOURCES_DIR) && tar xzf $< && mv openssl-* "openssl"
+	cd $(SOURCES_DIR)/openssl && cat $(PATCHES_DIR)/openssl.patch | patch -p1
 	touch $@
 
 $(SOURCES_DIR)/opkg/.done: $(SOURCES_DIR)/opkg.tar.gz
@@ -529,7 +530,7 @@ $(DOWNLOADS_DIR)/make.tar.bz2:
 $(DOWNLOADS_DIR)/texinfo.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/texinfo-4.0-2.m68kmint.rpm"
-	
+
 $(DOWNLOADS_DIR)/shadow-utils.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/shadow-utils-20000902-1.m68kmint.rpm"

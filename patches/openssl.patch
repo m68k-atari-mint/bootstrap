@@ -1,0 +1,27 @@
+diff -ru openssl-1.0.2r/crypto/rand/rand_unix.c openssl/crypto/rand/rand_unix.c
+--- openssl-1.0.2r/crypto/rand/rand_unix.c	2019-02-26 15:20:20.000000000 +0100
++++ openssl/crypto/rand/rand_unix.c	2019-05-30 22:22:48.734507529 +0200
+@@ -307,7 +307,7 @@
+             do {
+                 int try_read = 0;
+ 
+-#   if defined(OPENSSL_SYS_BEOS_R5)
++#   if defined(OPENSSL_SYS_BEOS_R5) || defined(OPENSSL_SYS_MINT)
+                 /*
+                  * select() is broken in BeOS R5, so we simply try to read
+                  * something and snooze if we couldn't
+diff -ru openssl-1.0.2r/e_os2.h openssl/e_os2.h
+--- openssl-1.0.2r/e_os2.h	2019-02-26 15:20:20.000000000 +0100
++++ openssl/e_os2.h	2019-05-30 22:26:18.731202493 +0200
+@@ -231,6 +231,11 @@
+ #  endif
+ # endif
+ 
++/* ------------------------------ FreeMiNT -------------------------------- */
++# if defined(__MINT__)
++#  define OPENSSL_SYS_MINT
++# endif
++
+ /**
+  * That's it for OS-specific stuff
+  *****************************************************************************/
