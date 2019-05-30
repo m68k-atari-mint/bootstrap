@@ -9,21 +9,14 @@ addons:
       - sourceline: 'ppa:vriviere/ppa'
     packages:
       - aranym
+      - genext2fs
       - rpm2cpio
       - uml-utilities
       - binutils-m68k-atari-mint
       - gcc-m68k-atari-mint
 
 install:
-    - sudo modprobe tun
-    - sudo chown $USER /dev/net/tun
-    - sleep 1
-    - sudo tunctl -t tap0 -u $USER
-    - sleep 1
-    - sudo ifconfig tap0 192.168.251.1 pointopoint 192.168.251.2 netmask 255.255.255.255 up
-    - sudo iptables -t nat -A POSTROUTING -s 192.168.251.2 -j MASQUERADE
-    # seems to be already enabled (and doesn't allow us to change it anyway)
-    #- sudo echo 1 > /proc/sys/net/ipv4/ip_forward
+    - sudo ./enable_tun.sh $USER
 
 script:
     - unset CC
