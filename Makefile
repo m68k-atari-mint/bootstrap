@@ -24,7 +24,7 @@ RPM_EXTRACT	:= $(PWD)/rpm_extract.sh
 CONFIGURE	:= configure CFLAGS=\'-O2 -fomit-frame-pointer\' --prefix=/usr --exec-prefix=
 ARANYM_JIT	:= $(PWD)/aranym-jit.sh
 ARANYM_MMU	:= $(PWD)/aranym-mmu.sh
-SSH		:= ssh root@192.168.251.2 source /etc/profile\;
+SSH		:= ssh -o "StrictHostKeyChecking no" root@192.168.251.2 source /etc/profile\;
 AND		:= \&\&
 
 ###############################################################################
