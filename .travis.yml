@@ -17,13 +17,19 @@ addons:
 
 install:
     - sudo ./enable_tun.sh $USER
-
-script:
     - unset CC
     - unset CXX
     - mkdir -p ~/.ssh && ssh-keygen -t rsa -f ~/.ssh/id_rsa -q -N ""
-    - make prepare
-    - make configure1 build1
-    - make configure2 build2
-    - make configure3 build3
-    - make configure4 build4
+
+jobs:
+  include:
+    - stage: prepare
+      script: make prepare
+    - stage: build1
+      script: make configure1 build1
+    - stage: build2
+      script: make configure2 build2
+    - stage: build3
+      script: make configure3 build3
+    - stage: build4
+      script: make configure4 build4
