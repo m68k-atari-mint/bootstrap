@@ -86,7 +86,7 @@ configure3: build2 $(BUILD_DIR)/.libarchive.configured
 $(BUILD_DIR)/.libarchive.configured:
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/libarchive $(AND) mkdir -p /e/root/libarchive $(AND) cd /e/root/libarchive \
-		$(AND) /root/libarchive/configure CFLAGS=\'-O2 -fomit-frame-pointer -I/e/usr/include\' LDFLAGS=\'-L/e/usr/lib\' --prefix=/usr --exec-prefix=
+		$(AND) /root/libarchive/configure CFLAGS=\'-O2 -fomit-frame-pointer -I/e/usr/include\' LDFLAGS=\'-L/e/usr/lib\' --prefix=/usr
 	touch $@
 
 .PHONY: configure4	
@@ -150,10 +150,10 @@ build4: configure4 $(BUILD_DIR)/.openssh.done $(BUILD_DIR)/.opkg.done $(BUILD_DI
 $(BUILD_DIR)/.openssh.done:
 	$(ARANYM_JIT)
 	$(SSH) cd /e/root/openssh $(AND) make \
-		$(AND) ./ssh-keygen -t rsa -f /f/etc/ssh/ssh_host_rsa_key -q -N "" \
-		$(AND) ./ssh-keygen -t dsa -f /f/etc/ssh/ssh_host_dsa_key -q -N "" \
-		$(AND) ./ssh-keygen -t ecdsa  -f /f/etc/ssh/ssh_host_ecdsa_key -q -N "" \
-		$(AND) mkdir -p /f/var/empty $(AND) groupadd sshd $(AND) useradd -g sshd -c \'sshd privsep\' -d /var/empty -s /bin/false sshd $(AND) chown root:root /f/var/empty \
+		$(AND) mkdir -p /f/etc/ssh \
+		$(AND) ./ssh-keygen -t rsa -f /f/etc/ssh/ssh_host_rsa_key -q -N \"\" \
+		$(AND) ./ssh-keygen -t dsa -f /f/etc/ssh/ssh_host_dsa_key -q -N \"\" \
+		$(AND) ./ssh-keygen -t ecdsa  -f /f/etc/ssh/ssh_host_ecdsa_key -q -N \"\" \
 		$(AND) make install DESTDIR=/f
 	touch $@
 	
