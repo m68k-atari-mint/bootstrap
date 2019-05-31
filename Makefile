@@ -76,6 +76,7 @@ $(BUILD_DIR)/.zlib.configured:
 configure2: $(BUILD_DIR)/.openssl.configured
 
 $(BUILD_DIR)/.openssl.configured:
+	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/openssl $(AND) cp -ra /d/root/openssl /e/root/openssl $(AND) cd /e/root/openssl \
 		$(AND) ./Configure -DB_ENDIAN -DOPENSSL_USE_IPV6=0 -DDEVRANDOM=\\\"/dev/urandom\\\",\\\"/dev/random\\\" -L/e/usr/lib -I/e/usr/include no-shared no-threads no-makedepend no-unit-test no-tests zlib --prefix=/usr gcc:gcc -O2 -fomit-frame-pointer
@@ -85,6 +86,7 @@ $(BUILD_DIR)/.openssl.configured:
 configure3: $(BUILD_DIR)/.libarchive.configured
 
 $(BUILD_DIR)/.libarchive.configured:
+	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/libarchive $(AND) mkdir -p /e/root/libarchive $(AND) cd /e/root/libarchive \
 		$(AND) /root/libarchive/configure CFLAGS=\'-O2 -fomit-frame-pointer -I/e/usr/include\' LDFLAGS=\'-L/e/usr/lib\' --prefix=/usr
@@ -94,12 +96,14 @@ $(BUILD_DIR)/.libarchive.configured:
 configure4: $(BUILD_DIR)/.openssh.configured $(BUILD_DIR)/.opkg.configured $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
 
 $(BUILD_DIR)/.openssh.configured:
+	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/openssh $(AND) mkdir -p /e/root/openssh $(AND) cd /e/root/openssh \
 		$(AND) /root/openssh/$(CONFIGURE) --sysconfdir=/etc/ssh --with-zlib=/e/usr --with-ssl-dir=/e/usr ac_cv_member_struct_stat_st_mtim=no
 	touch $@
 
 $(BUILD_DIR)/.opkg.configured:
+	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/opkg $(AND) mkdir -p /e/root/opkg $(AND) cd /e/root/opkg \
 		$(AND) export LIBARCHIVE_CFLAGS=\'-I/e/usr/include\' $(AND) export LIBARCHIVE_LIBS=\'-L/e/usr/lib -larchive\' \
@@ -107,6 +111,7 @@ $(BUILD_DIR)/.opkg.configured:
 	touch $@
 
 $(BUILD_DIR)/.sh.configured: $(BUILD_DIR)/.bash.configured
+	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/bash-minimal $(AND) mkdir -p /e/root/bash-minimal $(AND) cd /e/root/bash-minimal \
 		$(AND) cp ../bash/config.cache . \
@@ -114,6 +119,7 @@ $(BUILD_DIR)/.sh.configured: $(BUILD_DIR)/.bash.configured
 	touch $@
 
 $(BUILD_DIR)/.bash.configured:
+	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/bash $(AND) mkdir -p /e/root/bash $(AND) cd /e/root/bash \
 		$(AND) /root/bash/$(CONFIGURE) --disable-nls --config-cache
