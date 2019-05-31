@@ -140,7 +140,7 @@ build2: configure2 $(BUILD_DIR)/.openssl.done
 
 $(BUILD_DIR)/.openssl.done:
 	$(ARANYM_JIT)
-	$(SSH) cd /e/root/openssl $(AND) make $(AND) make install_sw INSTALL_PREFIX=/e
+	$(SSH) cd /e/root/openssl $(AND) make -j 2 $(AND) make install_sw INSTALL_PREFIX=/e
 	touch $@
 
 .PHONY: build3
