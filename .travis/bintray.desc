@@ -1,0 +1,19 @@
+{
+    "package": {
+        "name": "images",
+        "repo": "opkg-bootstrap",
+        "subject": "m68k-atari-mint"
+    },
+
+    "version": {
+        "name": "PACKAGE_VERSION",
+        "desc": "Commit URL: COMMIT_URL",
+        "attributes": [{"name": "Commit", "values" : ["COMMIT_ID"], "type": "string"}]
+    },
+
+    "files": [
+        {"includePattern": "\./(drive_.\.img.bz2)", "uploadPattern": "images/PACKAGE_VERSION/PACKAGE_STAGE/$1", "matrixParams": {"override": 1}}
+    ],
+
+    "publish": true
+}

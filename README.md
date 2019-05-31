@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/m68k-atari-mint/bootstrap.svg?branch=master)](https://travis-ci.org/m68k-atari-mint/bootstrap)
+[![Build Status](https://travis-ci.org/m68k-atari-mint/bootstrap.svg?branch=master)](https://travis-ci.org/m68k-atari-mint/bootstrap) [![Download](https://api.bintray.com/packages/m68k-atari-mint/opkg-bootstrap/images/images/download.svg)](https://bintray.com/m68k-atari-mint/opkg-bootstrap/images/_latestVersion)
 
 Bootstrap plan:
 - we need to create three drives:

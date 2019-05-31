@@ -15,6 +15,11 @@ addons:
       - binutils-m68k-atari-mint
       - gcc-m68k-atari-mint
 
+env:
+  global:
+    - BINTRAY_USER="mikrosk"
+    # BINTRAY_API_KEY is defined in Travis Settings of m68k-atari-mint/bootstrap
+
 install:
     - sudo ./enable_tun.sh $USER
     - unset CC
@@ -23,13 +28,54 @@ install:
 
 jobs:
   include:
-    - stage: prepare
+    - stage: Prepare
       script: make prepare
-    - stage: build1
-      script: make configure1 build1
-    - stage: build2
-      script: make configure2 build2
-    - stage: build3
-      script: make configure3 build3
-    - stage: build4
-      script: make configure4 build4
+
+    - stage: Build1
+      script:
+        - sh ./.travis/download_drive.sh Prepare d
+        - sh ./.travis/download_drive.sh Prepare e
+        - make prepare_boot configure1 build1
+
+    - stage: Build2
+      script:
+        - sh ./.travis/download_drive.sh Prepare d
+        - sh ./.travis/download_drive.sh Build1 e
+        - make prepare_boot configure2 build2
+        - rm drive_d.img
+
+    - stage: Build3
+      script:
+        - sh ./.travis/download_drive.sh Prepare d
+        - sh ./.travis/download_drive.sh Build2 e
+        - make prepare_boot configure3 build3
+        - rm drive_d.img
+
+    - stage: Build4
+      script:
+       - sh ./.travis/download_drive.sh Prepare d
+       - sh ./.travis/download_drive.sh Build3 e
+       - sh ./.travis/download_drive.sh Prepare f
+       - make prepare_boot configure4 build4
+       - rm drive_d.img
+
+    # stage5 can build many packages in parallel
+
+before_deploy:
+    - sed -i -e "s/PACKAGE_VERSION/${TRAVIS_COMMIT}/g;" .travis/bintray.desc
+    - sed -i -e "s/PACKAGE_STAGE/${TRAVIS_BUILD_STAGE_NAME}/g;" .travis/bintray.desc
+    - sed -i -e "s/COMMIT_ID/${TRAVIS_COMMIT}/g;" .travis/bintray.desc
+    - sed -i -e "s/COMMIT_URL/https:\/\/github.com\/m68k-atari-mint\/bootstrap\/commit\/${TRAVIS_COMMIT}/g;" .travis/bintray.desc
+    - if [ -f drive_d.img ]; then bzip2 drive_d.img; fi
+    - if [ -f drive_e.img ]; then bzip2 drive_e.img; fi
+    - if [ -f drive_f.img ]; then bzip2 drive_f.img; fi
+
+deploy:
+  provider: bintray
+  file: ".travis/bintray.desc"
+  user: "${BINTRAY_USER}"
+  key: "${BINTRAY_API_KEY}"
+  skip_cleanup: true
+  on:
+    branch: master
+    repo: m68k-atari-mint/bootstrap
