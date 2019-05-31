@@ -36,6 +36,7 @@ jobs:
         - sh ./.travis/download_drive.sh Prepare d
         - sh ./.travis/download_drive.sh Prepare e
         - make prepare_boot configure1 build1
+        - rm drive_d.img
 
     - stage: Build2
       script:

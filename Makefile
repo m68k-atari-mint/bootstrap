@@ -73,7 +73,7 @@ $(BUILD_DIR)/.zlib.configured:
 	touch $@
 
 .PHONY: configure2
-configure2: build1 $(BUILD_DIR)/.openssl.configured
+configure2: $(BUILD_DIR)/.openssl.configured
 
 $(BUILD_DIR)/.openssl.configured:
 	$(ARANYM_MMU)
@@ -82,7 +82,7 @@ $(BUILD_DIR)/.openssl.configured:
 	touch $@
 
 .PHONY: configure3
-configure3: build2 $(BUILD_DIR)/.libarchive.configured
+configure3: $(BUILD_DIR)/.libarchive.configured
 
 $(BUILD_DIR)/.libarchive.configured:
 	$(ARANYM_MMU)
@@ -91,7 +91,7 @@ $(BUILD_DIR)/.libarchive.configured:
 	touch $@
 
 .PHONY: configure4
-configure4: build3 $(BUILD_DIR)/.openssh.configured $(BUILD_DIR)/.opkg.configured $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
+configure4: $(BUILD_DIR)/.openssh.configured $(BUILD_DIR)/.opkg.configured $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
 
 $(BUILD_DIR)/.openssh.configured:
 	$(ARANYM_MMU)
