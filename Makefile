@@ -51,7 +51,6 @@ $(BUILD_DIR)/.setup.done:
 	$(SSH) mkdir -p /f/{boot,etc,home,lib,mnt,opt,root,sbin,tmp,usr,var,var/log,var/run}
 	$(SSH) cp -a /sbin/shutdown /f/sbin/shutdown
 	$(SSH) cp -a /etc/{group,hostname,passwd} /f/etc
-	# TODO: replace /f/etc/passwd with /var/empty entry
 	$(SSH) cp -a /etc/profile.target /f/etc/profile
 	$(SSH) touch /f/etc/utmp
 	$(SSH) touch /f/var/log/lastlog
