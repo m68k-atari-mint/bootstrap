@@ -79,7 +79,7 @@ $(BUILD_DIR)/.openssl.configured:
 	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/openssl $(AND) cp -ra /d/root/openssl /e/root/openssl $(AND) cd /e/root/openssl \
-		$(AND) ./Configure -DB_ENDIAN -DOPENSSL_USE_IPV6=0 -DDEVRANDOM=\\\"/dev/urandom\\\",\\\"/dev/random\\\" -L/e/usr/lib -I/e/usr/include no-shared no-threads no-makedepend no-unit-test no-tests zlib --prefix=/usr gcc:gcc -O2 -fomit-frame-pointer
+		$(AND) ./Configure -DB_ENDIAN -DOPENSSL_USE_IPV6=0 -DDEVRANDOM=\\\"/dev/urandom\\\",\\\"/dev/random\\\" -L/e/usr/lib -I/e/usr/include no-shared no-threads no-makedepend zlib --prefix=/usr gcc:gcc -O2 -fomit-frame-pointer
 	touch $@
 
 .PHONY: configure3
@@ -131,22 +131,33 @@ $(BUILD_DIR)/.bash.configured:
 build1: configure1 $(BUILD_DIR)/.zlib.done
 
 $(BUILD_DIR)/.zlib.done:
+	mkdir -p $(BUILD_DIR)
 	$(ARANYM_JIT)
 	$(SSH) cd /e/root/zlib $(AND) make $(AND) make install DESTDIR=/e
 	touch $@
 
-.PHONY: build2
-build2: configure2 $(BUILD_DIR)/.openssl.done
+.PHONY: build2 build2.1 build2.2
+build2: build2.1 build2.2
+build2.1: configure2 $(BUILD_DIR)/.openssl-1.done
+build2.2: $(BUILD_DIR)/.openssl-2.done
 
-$(BUILD_DIR)/.openssl.done:
+$(BUILD_DIR)/.openssl-1.done:
+	mkdir -p $(BUILD_DIR)
 	$(ARANYM_JIT)
-	$(SSH) cd /e/root/openssl $(AND) make -j 2 $(AND) make install_sw INSTALL_PREFIX=/e
+	$(SSH) cd /e/root/openssl $(AND) make build_libs
+	touch $@
+
+$(BUILD_DIR)/.openssl-2.done:
+	mkdir -p $(BUILD_DIR)
+	$(ARANYM_JIT)
+	$(SSH) cd /e/root/openssl $(AND) make $(AND) make install_sw INSTALL_PREFIX=/e
 	touch $@
 
 .PHONY: build3
 build3: configure3 $(BUILD_DIR)/.libarchive.done
 
 $(BUILD_DIR)/.libarchive.done:
+	mkdir -p $(BUILD_DIR)
 	$(ARANYM_JIT)
 	$(SSH) cd /e/root/libarchive $(AND) make $(AND) make install-strip DESTDIR=/e
 	touch $@
@@ -155,6 +166,7 @@ $(BUILD_DIR)/.libarchive.done:
 build4: configure4 $(BUILD_DIR)/.openssh.done $(BUILD_DIR)/.opkg.done $(BUILD_DIR)/.sh.done $(BUILD_DIR)/.bash.done
 
 $(BUILD_DIR)/.openssh.done:
+	mkdir -p $(BUILD_DIR)
 	$(ARANYM_JIT)
 	$(SSH) cd /e/root/openssh $(AND) make \
 		$(AND) mkdir -p /f/etc/ssh \
@@ -165,16 +177,19 @@ $(BUILD_DIR)/.openssh.done:
 	touch $@
 
 $(BUILD_DIR)/.opkg.done:
+	mkdir -p $(BUILD_DIR)
 	$(ARANYM_JIT)
 	$(SSH) cd /e/root/opkg $(AND) make $(AND) make install-strip DESTDIR=/f
 	touch $@
 
 $(BUILD_DIR)/.sh.done:
+	mkdir -p $(BUILD_DIR)
 	$(ARANYM_JIT)
 	$(SSH) cd /e/root/bash-minimal $(AND) make $(AND) make install-strip DESTDIR=/f $(AND) mv /f/bin/bash /f/bin/sh
 	touch $@
 
 $(BUILD_DIR)/.bash.done:
+	mkdir -p $(BUILD_DIR)
 	$(ARANYM_JIT)
 	$(SSH) cd /e/root/bash $(AND) make $(AND) make install-strip DESTDIR=/f
 	touch $@
