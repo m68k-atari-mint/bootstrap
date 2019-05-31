@@ -29,8 +29,11 @@ AND		:= \&\&
 
 ###############################################################################
 
+.PHONY: prepare_boot
+prepare_boot: emutos/.done aranym.config id_rsa.pub $(BOOT_DRIVE)/.done
+
 .PHONY: prepare
-prepare: emutos/.done $(BOOT_DRIVE)/.done $(HOST_IMAGE) $(TARGET_IMAGE) $(FINAL_IMAGE) aranym.config setup_build
+prepare: prepare_boot $(HOST_IMAGE) $(TARGET_IMAGE) $(FINAL_IMAGE) setup_build
 
 .PHONY: build
 build: configure1 build1 configure2 build2 configure3 build3 configure4 build4
@@ -54,7 +57,6 @@ $(BUILD_DIR)/.setup.done:
 	$(SSH) touch /f/var/log/lastlog
 	$(SSH) touch /f/var/run/utmp
 	$(SSH) mkdir -p /f/var/empty
-	$(SSH) mkdir -p /f/root/.ssh $(AND) cp /root/.ssh/authorized_keys /f/root/.ssh $(AND) chmod 700 /f/root/.ssh $(AND) chmod 600 /f/root/.ssh/authorized_keys
 
 	touch $@
 
@@ -178,6 +180,10 @@ aranym.config:
 	# unfortunately, ARAnyM can't have config in a subfolder
 	cp $(CONFIG_DIR)/aranym.config .
 
+id_rsa.pub:
+	# mainly because of Windows vs. WSL $HOME inconsistency
+	cp $(HOME)/.ssh/id_rsa.pub .
+
 $(HOST_IMAGE): $(HOST_DRIVE)/.done
 	# unfortunately, ARAnyM on Cygwin has very unreliable hostfs
 	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) --squash $@
@@ -186,7 +192,7 @@ $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.open
 		binutils/.done gcc/.done $(HOST_DRIVE)/.mintbin.done $(HOST_DRIVE)/.mintlib.done $(HOST_DRIVE)/.fdlibm.done \
 		$(HOST_DRIVE)/.coreutils.done $(HOST_DRIVE)/.sed.done $(HOST_DRIVE)/.gawk.done $(HOST_DRIVE)/.grep.done $(HOST_DRIVE)/.diffutils.done \
 		$(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.m4.done $(HOST_DRIVE)/.perl.done $(HOST_DRIVE)/.hostname.done $(HOST_DRIVE)/.make.done \
-		$(HOST_DRIVE)/.texinfo.done $(HOST_DRIVE)/.shadow-utils.done \
+		$(HOST_DRIVE)/.texinfo.done \
 		$(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/bison/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/gawk/.done \
 		$(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/libarchive/.done $(SOURCES_DIR)/m4/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/mintbin/.done \
 		$(SOURCES_DIR)/openssh/.done $(SOURCES_DIR)/openssl/.done $(SOURCES_DIR)/opkg/.done $(SOURCES_DIR)/sed/.done $(SOURCES_DIR)/zlib/.done
@@ -221,8 +227,6 @@ $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.open
 	rm -f $(HOST_DRIVE)/usr/bin/awk
 	rm -f $(HOST_DRIVE)/usr/bin/gawk
 
-	mkdir -p $(HOST_DRIVE)/root/.ssh && cat $(HOME)/.ssh/id_rsa.pub >> $(HOST_DRIVE)/root/.ssh/authorized_keys
-
 	# SpareMiNT's makeinfo is too old (replacing it with a newer is far more hassle...)
 	sed -i -e 's/^@copying/@ignore/;' $(HOST_DRIVE)/root/bash/doc/bashref.texi
 	sed -i -e 's/^@end copying/@end ignore/;' $(HOST_DRIVE)/root/bash/doc/bashref.texi
@@ -249,12 +253,13 @@ emutos/.done: $(DOWNLOADS_DIR)/emutos.zip
 	mv emutos-aranym-* "emutos"
 	touch $@
 
-$(BOOT_DRIVE)/.done: $(DOWNLOADS_DIR)/freemint.zip $(CONFIG_DIR)/mint.cnf $(TOOLS_DIR)/eth0-config.sh $(TOOLS_DIR)/nfeth-config
+$(BOOT_DRIVE)/.done: $(DOWNLOADS_DIR)/freemint.zip $(CONFIG_DIR)/mint.cnf $(TOOLS_DIR)/eth0-config.sh $(TOOLS_DIR)/nfeth-config $(TOOLS_DIR)/public_key.sh
 	unzip -q $< -d $(BOOT_DRIVE)
 	cp $(CONFIG_DIR)/mint.cnf $(BOOT_DRIVE)/mint/1-19-cur
 	mkdir -p $(BOOT_DRIVE)/mint/bin
 	cp $(TOOLS_DIR)/eth0-config.sh $(BOOT_DRIVE)/mint/bin
 	cp $(TOOLS_DIR)/nfeth-config $(BOOT_DRIVE)/mint/bin
+	cp $(TOOLS_DIR)/public_key.sh $(BOOT_DRIVE)/mint/bin
 	touch $@
 
 ###############################################################################
@@ -362,11 +367,6 @@ $(HOST_DRIVE)/.make.done: $(DOWNLOADS_DIR)/make.tar.bz2
 	touch $@
 
 $(HOST_DRIVE)/.texinfo.done: $(DOWNLOADS_DIR)/texinfo.rpm
-	mkdir -p $(HOST_DRIVE)
-	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
-	touch $@
-
-$(HOST_DRIVE)/.shadow-utils.done: $(DOWNLOADS_DIR)/shadow-utils.rpm
 	mkdir -p $(HOST_DRIVE)
 	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
@@ -531,10 +531,6 @@ $(DOWNLOADS_DIR)/texinfo.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/texinfo-4.0-2.m68kmint.rpm"
 
-$(DOWNLOADS_DIR)/shadow-utils.rpm:
-	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/shadow-utils-20000902-1.m68kmint.rpm"
-
 ###############################################################################
 
 $(SOURCES_DIR)/bash.tar.gz:
@@ -616,7 +612,7 @@ driveclean:
 .PHONY: clean
 clean: driveclean
 	rm -f *~
-	rm -f aranym.config
+	rm -f aranym.config id_rsa.pub
 	rm -rf emutos oldstuff binutils gcc
 	rm -rf mintlib-src fdlibm-src
 	rm -rf $(SOURCES_DIR)/{bash,bison,coreutils,diffutils,fdlibm,gawk,grep,libarchive,m4,make,mintbin,mintlib,openssh,openssl,opkg,sed,zlib}

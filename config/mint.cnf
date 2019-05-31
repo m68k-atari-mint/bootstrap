@@ -362,7 +362,11 @@ setenv TMPDIR u:/tmp
 #echo
 
 # Start nfeth
-exec /bin/bash u:/c/mint/bin/eth0-config.sh
+exec /bin/sh u:/c/mint/bin/eth0-config.sh
+echo
+
+# Copy public key
+exec /bin/sh u:/c/mint/bin/public_key.sh
 echo
 
 # Default login variables. Leave them commented out, if you use

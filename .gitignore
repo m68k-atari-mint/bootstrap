@@ -17,3 +17,4 @@ mintlib-src/
 .aranym-mmu
 .aranym-jit
 sshd.log
+id_rsa.pub
