@@ -99,7 +99,7 @@ $(BUILD_DIR)/.openssh.configured:
 	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/openssh $(AND) mkdir -p /e/root/openssh $(AND) cd /e/root/openssh \
-		$(AND) /root/openssh/$(CONFIGURE) --sysconfdir=/etc/ssh --with-zlib=/e/usr --with-ssl-dir=/e/usr ac_cv_member_struct_stat_st_mtim=no
+		$(AND) /root/openssh/$(CONFIGURE) --sysconfdir=/etc/ssh --without-stackprotect --with-zlib=/e/usr --with-ssl-dir=/e/usr ac_cv_member_struct_stat_st_mtim=no
 	touch $@
 
 $(BUILD_DIR)/.opkg.configured:
