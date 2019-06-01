@@ -22,7 +22,7 @@ TOOLS_DIR	:= $(PWD)/tools
 WGET		:= wget -q --no-check-certificate -O
 RPM_EXTRACT	:= $(PWD)/rpm_extract.sh
 CONFIGURE	:= configure CFLAGS=\'-O2 -fomit-frame-pointer\' --prefix=/usr --exec-prefix=
-ARANYM_JIT	:= $(PWD)/aranym-jit.sh
+ARANYM_JIT	:= $(PWD)/aranym-mmu.sh
 ARANYM_MMU	:= $(PWD)/aranym-mmu.sh
 SSH		:= ssh -o "StrictHostKeyChecking no" root@192.168.251.2 source /etc/profile\;
 AND		:= \&\&
@@ -93,7 +93,7 @@ $(BUILD_DIR)/.libarchive.configured:
 	touch $@
 
 .PHONY: configure4
-configure4: $(BUILD_DIR)/.openssh.configured $(BUILD_DIR)/.opkg.configured $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
+configure4: $(BUILD_DIR)/.openssh.configured #$(BUILD_DIR)/.opkg.configured $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
 
 $(BUILD_DIR)/.openssh.configured:
 	mkdir -p $(BUILD_DIR)
@@ -143,7 +143,7 @@ build2.2: $(BUILD_DIR)/.openssl-2.done
 
 $(BUILD_DIR)/.openssl-1.done:
 	mkdir -p $(BUILD_DIR)
-	$(ARANYM_JIT)
+	$(PWD)/aranym-jit.sh
 	$(SSH) cd /e/root/openssl $(AND) make build_libs
 	touch $@
 
@@ -163,7 +163,7 @@ $(BUILD_DIR)/.libarchive.done:
 	touch $@
 
 .PHONY: build4
-build4: configure4 $(BUILD_DIR)/.openssh.done $(BUILD_DIR)/.opkg.done $(BUILD_DIR)/.sh.done $(BUILD_DIR)/.bash.done
+build4: configure4 $(BUILD_DIR)/.openssh.done #$(BUILD_DIR)/.opkg.done $(BUILD_DIR)/.sh.done $(BUILD_DIR)/.bash.done
 
 $(BUILD_DIR)/.openssh.done:
 	mkdir -p $(BUILD_DIR)
