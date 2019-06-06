@@ -16,7 +16,7 @@ then
 		sleep 7
 		rm .aranym-jit
 	fi
-	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy ${ARANYM_MMU} -c aranym.config 2> /dev/null &
+	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy ${ARANYM_MMU} -c config/aranym.config 2> /dev/null &
 	sleep 7
 	touch .aranym-mmu
 fi

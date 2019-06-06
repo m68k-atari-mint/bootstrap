@@ -3,9 +3,6 @@ SHELL		:= /bin/bash
 BOOT_DRIVE	:= $(PWD)/drive_c
 HOST_DRIVE	:= $(PWD)/drive_d
 
-HOST_IMAGE	= drive_d.img
-HOST_IMAGE_SIZE = 512
-
 TARGET_IMAGE	= drive_e.img
 TARGET_IMAGE_SIZE = 512
 
@@ -22,7 +19,7 @@ TOOLS_DIR	:= $(PWD)/tools
 WGET		:= wget -q --no-check-certificate -O
 RPM_EXTRACT	:= $(PWD)/rpm_extract.sh
 CONFIGURE	:= configure CFLAGS=\'-O2 -fomit-frame-pointer\' --prefix=/usr --exec-prefix=
-ARANYM_JIT	:= $(PWD)/aranym-mmu.sh
+ARANYM_JIT	:= $(PWD)/aranym-jit.sh
 ARANYM_MMU	:= $(PWD)/aranym-mmu.sh
 SSH		:= ssh -o "StrictHostKeyChecking no" root@192.168.251.2 source /etc/profile\;
 AND		:= \&\&
@@ -30,10 +27,10 @@ AND		:= \&\&
 ###############################################################################
 
 .PHONY: prepare_boot
-prepare_boot: emutos/.done aranym.config id_rsa.pub $(BOOT_DRIVE)/.done
+prepare_boot: emutos/.done id_rsa.pub $(BOOT_DRIVE)/.done
 
 .PHONY: prepare
-prepare: prepare_boot $(HOST_IMAGE) $(TARGET_IMAGE) $(FINAL_IMAGE) setup_build
+prepare: prepare_boot $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(FINAL_IMAGE) setup_build
 
 .PHONY: build
 build: configure1 build1 configure2 build2 configure3 build3 configure4 build4
@@ -143,7 +140,7 @@ build2.2: $(BUILD_DIR)/.openssl-2.done
 
 $(BUILD_DIR)/.openssl-1.done:
 	mkdir -p $(BUILD_DIR)
-	$(PWD)/aranym-jit.sh
+	$(ARANYM_JIT)
 	$(SSH) cd /e/root/openssl $(AND) make build_libs
 	touch $@
 
@@ -196,17 +193,9 @@ $(BUILD_DIR)/.bash.done:
 
 ###############################################################################
 
-aranym.config:
-	# unfortunately, ARAnyM can't have config in a subfolder
-	cp $(CONFIG_DIR)/aranym.config .
-
 id_rsa.pub:
 	# mainly because of Windows vs. WSL $HOME inconsistency
 	cp $(HOME)/.ssh/id_rsa.pub .
-
-$(HOST_IMAGE): $(HOST_DRIVE)/.done
-	# unfortunately, ARAnyM on Cygwin has very unreliable hostfs
-	genext2fs -b $$(($(HOST_IMAGE_SIZE) * 1024)) -d $(HOST_DRIVE) --squash $@
 
 $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.openssh.done \
 		binutils/.done gcc/.done $(HOST_DRIVE)/.mintbin.done $(HOST_DRIVE)/.mintlib.done $(HOST_DRIVE)/.fdlibm.done \
@@ -255,6 +244,8 @@ $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.open
 	# SpareMiNT's sh is not really happy about this line
 	sed -i -e 's/$${SHELL} $${INFOPOST} < $$(srcdir)\/bashref.info > $$@ ; \\/$${SHELL} $${INFOPOST} < $$(srcdir)\/bashref.info > $$@/;' $(HOST_DRIVE)/root/bash/doc/Makefile.in
 	sed -i -e 's/$${SHELL} $${INFOPOST} < $$(srcdir)\/bashref.info > $$@ ; \\/$${SHELL} $${INFOPOST} < $$(srcdir)\/bashref.info > $$@/;' $(HOST_DRIVE)/root/bash-minimal/doc/Makefile.in
+	# it's a hostfs drive...
+	sed -i -e 's/^#StrictModes yes/StrictModes no/;' $(HOST_DRIVE)/etc/ssh/sshd_config
 
 	touch $@
 
@@ -625,7 +616,7 @@ $(SOURCES_DIR)/zlib.tar.xz:
 
 .PHONY: driveclean
 driveclean:
-	rm -f $(HOST_IMAGE) $(TARGET_IMAGE) $(FINAL_IMAGE)
+	rm -f $(TARGET_IMAGE) $(FINAL_IMAGE)
 	rm -rf $(BOOT_DRIVE) $(HOST_DRIVE)
 	rm -rf $(BUILD_DIR)
 
