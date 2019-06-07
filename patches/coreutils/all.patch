@@ -1,0 +1,288 @@
+diff -ruaN coreutils-8.31/lib/dosname.h coreutils/lib/dosname.h
+--- coreutils-8.31/lib/dosname.h	2019-01-04 17:14:43.000000000 +0100
++++ coreutils/lib/dosname.h	2019-06-07 22:49:49.581474720 +0200
+@@ -21,7 +21,7 @@
+ #define _DOSNAME_H
+
+ #if (defined _WIN32 || defined __CYGWIN__ \
+-     || defined __EMX__ || defined __MSDOS__ || defined __DJGPP__)
++     || defined __EMX__ || defined __MSDOS__ || defined __DJGPP__ || defined __MINT__)
+    /* This internal macro assumes ASCII, but all hosts that support drive
+       letters use ASCII.  */
+ # define _IS_DRIVE_LETTER(C) (((unsigned int) (C) | ('a' - 'A')) - 'a'  \
+diff -ruaN coreutils-8.31/lib/mountlist.c coreutils/lib/mountlist.c
+--- coreutils-8.31/lib/mountlist.c	2019-02-11 04:25:16.000000000 +0100
++++ coreutils/lib/mountlist.c	2019-06-07 22:48:03.732658805 +0200
+@@ -118,6 +118,30 @@
+ # include <dirent.h>
+ #endif
+
++#ifdef __MINT__
++#include <mintbind.h>
++#include <osbind.h>
++#include <sys/statfs.h>
++#include <mint/dcntl.h>
++
++int get_fsname (const char *path, char *xfs_name, char *type_name);
++
++/* get the list of available drives */
++static long
++get_drives(void)
++{
++	long drive_bits;
++	int drv;
++
++	drv = Dgetdrv();
++	drive_bits = Dsetdrv(drv);
++	drive_bits &= ~(1|2); /* exclude all floppies */
++
++	return drive_bits;
++}
++
++#endif
++
+ #if HAVE_SYS_MNTENT_H
+ /* This is to get MNTOPT_IGNORE on e.g. SVR4.  */
+ # include <sys/mntent.h>
+@@ -433,6 +457,66 @@
+   struct mount_entry **mtail = &mount_list;
+   (void) need_fs_type;
+
++#ifdef __MINT__
++  {
++	  struct statfs fsp;
++	  long drive_bits;
++	  int i, j;
++	  char lw[] = "a:/";
++	  char mountdir[] = "u:/x";
++	  char dev[] = "/dev/x";
++
++	  drive_bits = get_drives();
++	  for (i = 0; i < 32; i++)
++	  {
++		  if (drive_bits & (1L << i))
++		  {
++			  if (i < 26)
++				  lw[0] = 'a' + i;
++			  else
++				  lw[0] = '1' + i - 26;
++
++			  if(statfs(lw, &fsp) == 0)
++			  {
++				  char name[32];
++
++				  me = xmalloc (sizeof (*me));
++
++				  dev[5] = lw[0];
++				  mountdir[3] = lw[0];
++				  me->me_dev = i;
++				  me->me_mntroot = NULL;
++				  me->me_dummy = false;
++				  me->me_remote = false;
++				  if (i == ('U' - 'A'))
++				  {
++					  me->me_devname  = xstrdup("rootfs");
++					  me->me_mountdir = xstrdup("/");
++				  } else
++				  {
++					  me->me_devname  = xstrdup(dev);
++					  me->me_mountdir = xstrdup(mountdir);
++				  }
++				  me->me_type = NULL;
++
++				  if (need_fs_type)
++				  {
++					  get_fsname(lw, NULL, name);
++					  me->me_type = xstrdup(name);
++					  me->me_type_malloced = 1;
++					  me->me_remote = ME_REMOTE (me->me_devname, me->me_type);
++				  }
++				  /* Add to the linked list. */
++				  *mtail = me;
++				  mtail = &me->me_next;
++			  }
++		  }
++	  }
++	  *mtail = NULL;
++	  return mount_list;
++  }
++#endif
++
+ #ifdef MOUNTED_GETMNTENT1       /* glibc, HP-UX, IRIX, Cygwin, Android,
+                                    also (obsolete) 4.3BSD, SunOS */
+   {
+diff -ruaN coreutils-8.31/lib/physmem.c coreutils/lib/physmem.c
+--- coreutils-8.31/lib/physmem.c	2019-01-04 17:14:43.000000000 +0100
++++ coreutils/lib/physmem.c	2019-06-07 22:51:42.020213944 +0200
+@@ -87,6 +87,31 @@
+
+ #define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
+
++#ifdef __MINT__
++#include <mint/osbind.h>
++#include <mint/sysctl.h>
++
++static double
++freemem(void)
++{
++  int call[2] = { CTL_HW, HW_FREEPHYSMEM };
++  unsigned long free;
++  unsigned long freesize = sizeof (free);
++  long ret;
++
++  ret = sysctl (call, 2, &free, &freesize, NULL, 0);
++  if (ret == 0)
++    return free / 2;
++
++  ret = Malloc(-1);
++  if (ret > 0)
++    return ret / 2;
++
++  /* Guess 1 MB.  */
++  return 1024 * 1024;
++}
++#endif
++
+ /* Return the total amount of physical memory.  */
+ double
+ physmem_total (void)
+@@ -195,6 +220,10 @@
+   }
+ #endif
+
++#ifdef __MINT__
++  return freemem();
++#endif
++
+   /* Guess 64 MB.  It's probably an older host, so guess small.  */
+   return 64 * 1024 * 1024;
+ }
+@@ -304,6 +333,10 @@
+   }
+ #endif
+
++#ifdef __MINT__
++  return freemem();
++#endif
++
+   /* Guess 25% of physical memory.  */
+   return physmem_total () / 4;
+ }
+diff -ruaN coreutils-8.31/src/df.c coreutils/src/df.c
+--- coreutils-8.31/src/df.c	2019-03-04 08:40:55.000000000 +0100
++++ coreutils/src/df.c	2019-06-07 22:42:31.996345187 +0200
+@@ -727,6 +727,9 @@
+       if ((me->me_remote && show_local_fs)
+           || (me->me_dummy && !show_all_fs && !show_listed_fs)
+           || (!selected_fstype (me->me_type) || excluded_fstype (me->me_type))
++#ifdef __MINT__
++		  || 1 /* workaround for bug in stat() in mintlib returning wrong dev */
++#endif
+           || -1 == stat (me->me_mountdir, &buf))
+         {
+           /* If remote, and showing just local, or FS type is excluded,
+@@ -1362,7 +1365,7 @@
+      the mount point.  This avoids statting unavailable mount points,
+      which can hang df.  */
+   char *resolved = canonicalize_file_name (point);
+-  if (resolved && resolved[0] == '/')
++  if (resolved && IS_ABSOLUTE_FILE_NAME(resolved))
+     {
+       size_t resolved_len = strlen (resolved);
+       size_t best_match_len = 0;
+@@ -1417,11 +1420,13 @@
+             && !STREQ (me->me_type, "lofs")
+             && (!best_match || best_match->me_dummy || !me->me_dummy))
+           {
++#ifndef __MINT__
+             /* Skip bogus mtab entries.  */
+             if (stat (me->me_mountdir, &disk_stats) != 0
+                 || disk_stats.st_dev != me->me_dev)
+               me->me_dev = (dev_t) -2;
+             else
++#endif
+               best_match = me;
+           }
+       }
+diff -ruaN coreutils-8.31/src/getgid.c coreutils/src/getgid.c
+--- coreutils-8.31/src/getgid.c	1970-01-01 01:00:00.000000000 +0100
++++ coreutils/src/getgid.c	2019-06-07 22:51:54.086745155 +0200
+@@ -0,0 +1,41 @@
++/* getgid - print GID of given group
++   Copyright (C) 1999 Artur Frysiak <wiget@pld.org.pl>
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2, or (at your option)
++   any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with this program; if not, write to the Free Software Foundation,
++   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
++
++
++#include <grp.h>
++#include <sys/types.h>
++
++int main(int argc, char **argv)
++{
++	struct group 	*gr;
++	int		retval;
++
++	if (argc > 1) {
++		gr = getgrnam(argv[1]);
++		if (gr) {
++			printf("%d\n",gr->gr_gid);
++			retval = 0;
++		} else {
++			retval = 1;
++		}
++	} else {
++		printf("Usage:\n\t%s groupname\n",argv[0]);
++		retval = 1;
++	}
++	return retval;
++}
++
+diff -ruaN coreutils-8.31/src/tac.c coreutils/src/tac.c
+--- coreutils-8.31/src/tac.c	2019-01-05 11:36:22.000000000 +0100
++++ coreutils/src/tac.c	2019-06-07 22:42:31.996345187 +0200
+@@ -57,7 +57,7 @@
+   proper_name ("Jay Lepreau"), \
+   proper_name ("David MacKenzie")
+
+-#if defined __MSDOS__ || defined _WIN32
++#if defined __MSDOS__ || defined _WIN32 || defined __MINT__
+ /* Define this to non-zero on systems for which the regular mechanism
+    (of unlinking an open file and expecting to be able to write, seek
+    back to the beginning, then reread it) doesn't work.  E.g., on Windows
+diff -ruaN coreutils-8.31/src/uptime.c coreutils/src/uptime.c
+--- coreutils-8.31/src/uptime.c	2019-03-03 05:04:26.000000000 +0100
++++ coreutils/src/uptime.c	2019-06-07 22:53:21.932424904 +0200
+@@ -17,6 +17,9 @@
+ /* Created by hacking who.c by Kaveh Ghazi ghazi@caip.rutgers.edu.  */
+
+ #include <config.h>
++#ifdef __MINT__
++#define HAVE_PROC_UPTIME 1
++#endif
+ #include <stdio.h>
+
+ #include <sys/types.h>
+@@ -62,7 +65,11 @@
+ #ifdef HAVE_PROC_UPTIME
+   FILE *fp;
+
++#ifdef __MINT__
++  fp = fopen ("/kern/uptime", "r");
++#else
+   fp = fopen ("/proc/uptime", "r");
++#endif
+   if (fp != NULL)
+     {
+       char buf[BUFSIZ];

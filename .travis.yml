@@ -76,7 +76,7 @@ jobs:
        - make prepare_boot configure4 build4
        - ssh root@192.168.251.2 shutdown || sleep 1
        - rm drive_e.img
-       
+
     - stage: Build5
       name: opkg
       script:
@@ -86,7 +86,7 @@ jobs:
        - make prepare_boot configure5 build5
        - ssh root@192.168.251.2 shutdown || sleep 1
        - rm drive_e.img
-       
+
     - stage: Build6
       name: bash-minimal
       script:
@@ -96,7 +96,7 @@ jobs:
        - make prepare_boot configure6 build6
        - ssh root@192.168.251.2 shutdown || sleep 1
        - rm drive_e.img
-       
+
     - stage: Build7
       name: bash
       script:
@@ -104,6 +104,16 @@ jobs:
        - ./.travis/download_drive.sh Build3 e
        - ./.travis/download_drive.sh Build6 f
        - make prepare_boot configure7 build7
+       - ssh root@192.168.251.2 shutdown || sleep 1
+       - rm drive_e.img
+
+    - stage: Build8
+      name: coreutils
+      script:
+       - ./.travis/download_host_drive.sh Prepare d
+       - ./.travis/download_drive.sh Build3 e
+       - ./.travis/download_drive.sh Build7 f
+       - make prepare_boot configure8 build8
        - ssh root@192.168.251.2 shutdown || sleep 1
        - rm drive_e.img
 

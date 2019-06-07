@@ -1,0 +1,12 @@
+diff -ru coreutils-8.31/lib/config.hin coreutils/lib/config.hin
+--- coreutils-8.31/lib/config.hin	2019-03-10 23:27:21.000000000 +0100
++++ coreutils/lib/config.hin	2019-06-07 20:45:26.928408966 +0200
+@@ -3693,3 +3693,8 @@
+ /* Define to empty if the keyword `volatile' does not work. Warning: valid
+    code using `volatile' can become incorrect without. Disable with care. */
+ #undef volatile
++
++#ifdef __MINT__
++# undef MAX
++# define MAX(x,y) ((x) > (y) ? (x) : (y))
++#endif
