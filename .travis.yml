@@ -38,41 +38,41 @@ jobs:
     - stage: Build1
       name: zlib
       script:
-        - sh ./.travis/download_host_drive.sh Prepare d
-        - sh ./.travis/download_drive.sh Prepare e
+        - ./.travis/download_host_drive.sh Prepare d
+        - ./.travis/download_drive.sh Prepare e
         - make prepare_boot configure1 build1
         - ssh root@192.168.251.2 shutdown || sleep 1
 
     - stage: Build2.1
       name: openssl libs
       script:
-        - sh ./.travis/download_host_drive.sh Prepare d
-        - sh ./.travis/download_drive.sh Build1 e
+        - ./.travis/download_host_drive.sh Prepare d
+        - ./.travis/download_drive.sh Build1 e
         - make prepare_boot configure2 build2.1
         - ssh root@192.168.251.2 shutdown || sleep 1
 
     - stage: Build2.2
       name: openssl
       script:
-        - sh ./.travis/download_host_drive.sh Prepare d
-        - sh ./.travis/download_drive.sh Build2.1 e
+        - ./.travis/download_host_drive.sh Prepare d
+        - ./.travis/download_drive.sh Build2.1 e
         - make prepare_boot build2.2
         - ssh root@192.168.251.2 shutdown || sleep 1
 
     - stage: Build3
       name: libarchive
       script:
-        - sh ./.travis/download_host_drive.sh Prepare d
-        - sh ./.travis/download_drive.sh Build2.2 e
+        - ./.travis/download_host_drive.sh Prepare d
+        - ./.travis/download_drive.sh Build2.2 e
         - make prepare_boot configure3 build3
         - ssh root@192.168.251.2 shutdown || sleep 1
 
     - stage: Build4
       name: openssh
       script:
-       - sh ./.travis/download_host_drive.sh Prepare d
-       - sh ./.travis/download_drive.sh Build3 e
-       - sh ./.travis/download_drive.sh Prepare f
+       - ./.travis/download_host_drive.sh Prepare d
+       - ./.travis/download_drive.sh Build3 e
+       - ./.travis/download_drive.sh Prepare f
        - make prepare_boot configure4 build4
        - ssh root@192.168.251.2 shutdown || sleep 1
        - rm drive_e.img
@@ -80,9 +80,9 @@ jobs:
     - stage: Build5
       name: opkg
       script:
-       - sh ./.travis/download_host_drive.sh Prepare d
-       - sh ./.travis/download_drive.sh Build3 e
-       - sh ./.travis/download_drive.sh Build4 f
+       - ./.travis/download_host_drive.sh Prepare d
+       - ./.travis/download_drive.sh Build3 e
+       - ./.travis/download_drive.sh Build4 f
        - make prepare_boot configure5 build5
        - ssh root@192.168.251.2 shutdown || sleep 1
        - rm drive_e.img
@@ -90,9 +90,9 @@ jobs:
     - stage: Build6
       name: bash-minimal
       script:
-       - sh ./.travis/download_host_drive.sh Prepare d
-       - sh ./.travis/download_drive.sh Build3 e
-       - sh ./.travis/download_drive.sh Build5 f
+       - ./.travis/download_host_drive.sh Prepare d
+       - ./.travis/download_drive.sh Build3 e
+       - ./.travis/download_drive.sh Build5 f
        - make prepare_boot configure6 build6
        - ssh root@192.168.251.2 shutdown || sleep 1
        - rm drive_e.img
@@ -100,9 +100,9 @@ jobs:
     - stage: Build7
       name: bash
       script:
-       - sh ./.travis/download_host_drive.sh Prepare d
-       - sh ./.travis/download_drive.sh Build3 e
-       - sh ./.travis/download_drive.sh Build6 f
+       - ./.travis/download_host_drive.sh Prepare d
+       - ./.travis/download_drive.sh Build3 e
+       - ./.travis/download_drive.sh Build6 f
        - make prepare_boot configure7 build7
        - ssh root@192.168.251.2 shutdown || sleep 1
        - rm drive_e.img
