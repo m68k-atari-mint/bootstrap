@@ -36,6 +36,7 @@ jobs:
         - tar cf drive_d.img drive_d
 
     - stage: Build1
+      name: zlib
       script:
         - sh ./.travis/download_host_drive.sh Prepare d
         - sh ./.travis/download_drive.sh Prepare e
@@ -43,6 +44,7 @@ jobs:
         - ssh root@192.168.251.2 shutdown || sleep 1
 
     - stage: Build2.1
+      name: openssl libs
       script:
         - sh ./.travis/download_host_drive.sh Prepare d
         - sh ./.travis/download_drive.sh Build1 e
@@ -50,6 +52,7 @@ jobs:
         - ssh root@192.168.251.2 shutdown || sleep 1
 
     - stage: Build2.2
+      name: openssl
       script:
         - sh ./.travis/download_host_drive.sh Prepare d
         - sh ./.travis/download_drive.sh Build2.1 e
@@ -57,6 +60,7 @@ jobs:
         - ssh root@192.168.251.2 shutdown || sleep 1
 
     - stage: Build3
+      name: libarchive
       script:
         - sh ./.travis/download_host_drive.sh Prepare d
         - sh ./.travis/download_drive.sh Build2.2 e
@@ -64,14 +68,46 @@ jobs:
         - ssh root@192.168.251.2 shutdown || sleep 1
 
     - stage: Build4
+      name: openssh
       script:
        - sh ./.travis/download_host_drive.sh Prepare d
        - sh ./.travis/download_drive.sh Build3 e
        - sh ./.travis/download_drive.sh Prepare f
        - make prepare_boot configure4 build4
        - ssh root@192.168.251.2 shutdown || sleep 1
+       - rm drive_e.img
+       
+    - stage: Build5
+      name: opkg
+      script:
+       - sh ./.travis/download_host_drive.sh Prepare d
+       - sh ./.travis/download_drive.sh Build3 e
+       - sh ./.travis/download_drive.sh Build4 f
+       - make prepare_boot configure5 build5
+       - ssh root@192.168.251.2 shutdown || sleep 1
+       - rm drive_e.img
+       
+    - stage: Build6
+      name: bash-minimal
+      script:
+       - sh ./.travis/download_host_drive.sh Prepare d
+       - sh ./.travis/download_drive.sh Build3 e
+       - sh ./.travis/download_drive.sh Build5 f
+       - make prepare_boot configure6 build6
+       - ssh root@192.168.251.2 shutdown || sleep 1
+       - rm drive_e.img
+       
+    - stage: Build7
+      name: bash
+      script:
+       - sh ./.travis/download_host_drive.sh Prepare d
+       - sh ./.travis/download_drive.sh Build3 e
+       - sh ./.travis/download_drive.sh Build6 f
+       - make prepare_boot configure7 build7
+       - ssh root@192.168.251.2 shutdown || sleep 1
+       - rm drive_e.img
 
-    # stage5 can build many packages in parallel
+    # stage 8 can build many packages in parallel
 
 before_deploy:
     - sed -i -e "s/PACKAGE_VERSION/${TRAVIS_COMMIT}/g;" .travis/bintray.desc

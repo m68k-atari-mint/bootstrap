@@ -33,7 +33,7 @@ prepare_boot: emutos/.done id_rsa.pub $(BOOT_DRIVE)/.done
 prepare: prepare_boot $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(FINAL_IMAGE) setup_build
 
 .PHONY: build
-build: configure1 build1 configure2 build2 configure3 build3 configure4 build4
+build: configure1 build1 configure2 build2 configure3 build3 configure4 build4 configure5 build5 configure6 build6 configure7 build7
 
 ###############################################################################
 
@@ -90,7 +90,7 @@ $(BUILD_DIR)/.libarchive.configured:
 	touch $@
 
 .PHONY: configure4
-configure4: $(BUILD_DIR)/.openssh.configured #$(BUILD_DIR)/.opkg.configured $(BUILD_DIR)/.sh.configured $(BUILD_DIR)/.bash.configured
+configure4: $(BUILD_DIR)/.openssh.configured
 
 $(BUILD_DIR)/.openssh.configured:
 	mkdir -p $(BUILD_DIR)
@@ -98,6 +98,9 @@ $(BUILD_DIR)/.openssh.configured:
 	$(SSH) rm -rf /e/root/openssh $(AND) mkdir -p /e/root/openssh $(AND) cd /e/root/openssh \
 		$(AND) /root/openssh/$(CONFIGURE) --sysconfdir=/etc/ssh --without-stackprotect --with-zlib=/e/usr --with-ssl-dir=/e/usr ac_cv_member_struct_stat_st_mtim=no
 	touch $@
+
+.PHONY: configure5
+configure5: $(BUILD_DIR)/.opkg.configured
 
 $(BUILD_DIR)/.opkg.configured:
 	mkdir -p $(BUILD_DIR)
@@ -107,19 +110,24 @@ $(BUILD_DIR)/.opkg.configured:
 		$(AND) /root/opkg/$(CONFIGURE) --disable-curl --disable-gpg
 	touch $@
 
-$(BUILD_DIR)/.sh.configured: $(BUILD_DIR)/.bash.configured
+.PHONY: configure6
+configure6: $(BUILD_DIR)/.sh.configured
+
+$(BUILD_DIR)/.sh.configured:
 	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/bash-minimal $(AND) mkdir -p /e/root/bash-minimal $(AND) cd /e/root/bash-minimal \
-		$(AND) cp ../bash/config.cache . \
-		$(AND) /root/bash-minimal/$(CONFIGURE) --disable-nls --config-cache --enable-minimal-config --enable-alias --enable-strict-posix-default
+		$(AND) /root/bash-minimal/$(CONFIGURE) --disable-nls --enable-minimal-config --enable-alias --enable-strict-posix-default
 	touch $@
+
+.PHONY: configure7
+configure7: $(BUILD_DIR)/.bash.configured
 
 $(BUILD_DIR)/.bash.configured:
 	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
 	$(SSH) rm -rf /e/root/bash $(AND) mkdir -p /e/root/bash $(AND) cd /e/root/bash \
-		$(AND) /root/bash/$(CONFIGURE) --disable-nls --config-cache
+		$(AND) /root/bash/$(CONFIGURE) --disable-nls
 	touch $@
 
 # make && make install in the fastest possible way
@@ -160,7 +168,7 @@ $(BUILD_DIR)/.libarchive.done:
 	touch $@
 
 .PHONY: build4
-build4: configure4 $(BUILD_DIR)/.openssh.done #$(BUILD_DIR)/.opkg.done $(BUILD_DIR)/.sh.done $(BUILD_DIR)/.bash.done
+build4: configure4 $(BUILD_DIR)/.openssh.done
 
 $(BUILD_DIR)/.openssh.done:
 	mkdir -p $(BUILD_DIR)
@@ -173,17 +181,26 @@ $(BUILD_DIR)/.openssh.done:
 		$(AND) make install DESTDIR=/f
 	touch $@
 
+.PHONY: build5
+build5: configure5 $(BUILD_DIR)/.opkg.done
+
 $(BUILD_DIR)/.opkg.done:
 	mkdir -p $(BUILD_DIR)
 	$(ARANYM_JIT)
 	$(SSH) cd /e/root/opkg $(AND) make $(AND) make install-strip DESTDIR=/f
 	touch $@
 
+.PHONY: build6
+build6: configure6 $(BUILD_DIR)/.sh.done
+
 $(BUILD_DIR)/.sh.done:
 	mkdir -p $(BUILD_DIR)
 	$(ARANYM_JIT)
 	$(SSH) cd /e/root/bash-minimal $(AND) make $(AND) make install-strip DESTDIR=/f $(AND) mv /f/bin/bash /f/bin/sh
 	touch $@
+
+.PHONY: build7
+build7: configure7 $(BUILD_DIR)/.bash.done
 
 $(BUILD_DIR)/.bash.done:
 	mkdir -p $(BUILD_DIR)
