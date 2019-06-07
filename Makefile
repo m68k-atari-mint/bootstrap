@@ -460,7 +460,7 @@ $(SOURCES_DIR)/zlib/.done: $(SOURCES_DIR)/zlib.tar.xz
 
 $(DOWNLOADS_DIR)/emutos.zip:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "http://downloads.sourceforge.net/project/emutos/snapshots/20190527-231755-840026f/emutos-aranym-20190527-231755-840026f.zip"
+	$(WGET) $@ "http://downloads.sourceforge.net/project/emutos/emutos/0.9.11/emutos-aranym-0.9.11.zip"
 
 $(DOWNLOADS_DIR)/freemint.zip:
 	mkdir -p $(DOWNLOADS_DIR)

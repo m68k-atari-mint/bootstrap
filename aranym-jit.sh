@@ -13,10 +13,10 @@ then
 	if [ -f .aranym-mmu ]
 	then
 		ssh root@${ARANYM_IP} shutdown
-		sleep 7
+		sleep 10
 		rm .aranym-mmu
 	fi
 	SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy ${ARANYM_JIT} -c config/aranym.config 2> /dev/null &
-	sleep 7
+	sleep 10
 	touch .aranym-jit
 fi
