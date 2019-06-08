@@ -35,6 +35,10 @@ prepare: prepare_boot $(HOST_DRIVE)/.done $(TARGET_IMAGE) $(FINAL_IMAGE) setup_b
 .PHONY: build
 build: configure1 build1 configure2 build2 configure3 build3 configure4 build4 configure5 build5 configure6 build6 configure7 build7 configure8 build8
 
+.PHONY: shutdown
+shutdown:
+	$(SSH) shutdown || sleep 1
+
 ###############################################################################
 
 .PHONY: setup_build
@@ -136,10 +140,13 @@ configure8: $(BUILD_DIR)/.coreutils.configured
 $(BUILD_DIR)/.coreutils.configured:
 	mkdir -p $(BUILD_DIR)
 	$(ARANYM_MMU)
-	# We need mkdir, chown etc for public_key.sh
+	# We need mkdir, chown etc for public_key.sh (build it as part of /f for now, later: opkg)
+	# We have to disable help2man because it requires Perl 5.8.0 while we have only 5.6.0
 	$(SSH) rm -rf /e/root/coreutils $(AND) mkdir -p /e/root/coreutils $(AND) cd /e/root/coreutils \
 		$(AND) export FORCE_UNSAFE_CONFIGURE=1 \
-		$(AND) /root/coreutils/$(CONFIGURE) --disable-nls
+		$(AND) /root/coreutils/$(CONFIGURE) --disable-nls \
+		$(AND) sed -i \'s/^\\\(run_help2man = $$\(PERL\)\\\)/#\\1/\;\' Makefile \
+		$(AND) sed -i \'s/^#\\\(run_help2man = $$\(SHELL\)\\\)/\\1/\;\' Makefile
 	touch $@
 
 # make && make install in the fastest possible way
@@ -238,7 +245,8 @@ id_rsa.pub:
 $(HOST_DRIVE)/.done: $(HOST_DRIVE)/.bash.done oldstuff/.done $(HOST_DRIVE)/.openssh.done \
 		binutils/.done gcc/.done $(HOST_DRIVE)/.mintbin.done $(HOST_DRIVE)/.mintlib.done $(HOST_DRIVE)/.fdlibm.done \
 		$(HOST_DRIVE)/.coreutils.done $(HOST_DRIVE)/.sed.done $(HOST_DRIVE)/.gawk.done $(HOST_DRIVE)/.grep.done $(HOST_DRIVE)/.diffutils.done \
-		$(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.m4.done $(HOST_DRIVE)/.hostname.done $(HOST_DRIVE)/.make.done $(HOST_DRIVE)/.texinfo.done \
+		$(HOST_DRIVE)/.bison.done $(HOST_DRIVE)/.m4.done $(HOST_DRIVE)/.perl.done $(HOST_DRIVE)/.hostname.done $(HOST_DRIVE)/.make.done \
+		$(HOST_DRIVE)/.texinfo.done \
 		$(SOURCES_DIR)/bash/.done $(SOURCES_DIR)/bison/.done $(SOURCES_DIR)/coreutils/.done $(SOURCES_DIR)/diffutils/.done $(SOURCES_DIR)/gawk/.done \
 		$(SOURCES_DIR)/grep/.done $(SOURCES_DIR)/libarchive/.done $(SOURCES_DIR)/m4/.done $(SOURCES_DIR)/make/.done $(SOURCES_DIR)/mintbin/.done \
 		$(SOURCES_DIR)/openssh/.done $(SOURCES_DIR)/openssl/.done $(SOURCES_DIR)/opkg/.done $(SOURCES_DIR)/sed/.done $(SOURCES_DIR)/zlib/.done
@@ -395,6 +403,11 @@ $(HOST_DRIVE)/.bison.done: $(DOWNLOADS_DIR)/bison.rpm
 	touch $@
 
 $(HOST_DRIVE)/.m4.done: $(DOWNLOADS_DIR)/m4.rpm
+	mkdir -p $(HOST_DRIVE)
+	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
+	touch $@
+
+$(HOST_DRIVE)/.perl.done: $(DOWNLOADS_DIR)/perl.rpm
 	mkdir -p $(HOST_DRIVE)
 	cd $(HOST_DRIVE) && $(RPM_EXTRACT) $<
 	touch $@
@@ -558,6 +571,10 @@ $(DOWNLOADS_DIR)/bison.rpm:
 $(DOWNLOADS_DIR)/m4.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
 	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/m4-1.4.15-1.m68kmint.rpm"
+
+$(DOWNLOADS_DIR)/perl.rpm:
+	mkdir -p $(DOWNLOADS_DIR)
+	$(WGET) $@ "https://freemint.github.io/sparemint/sparemint/RPMS/m68kmint/perl-5.6.0-3.m68kmint.rpm"
 
 $(DOWNLOADS_DIR)/hostname.rpm:
 	mkdir -p $(DOWNLOADS_DIR)

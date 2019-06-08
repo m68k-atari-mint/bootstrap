@@ -30,8 +30,7 @@ jobs:
   include:
     - stage: Prepare
       script:
-        - make prepare
-        - ssh root@192.168.251.2 shutdown || sleep 1
+        - make prepare shutdown
         - rm drive_d/etc/nologin
         - tar cf drive_d.img drive_d
 
@@ -40,32 +39,28 @@ jobs:
       script:
         - ./.travis/download_host_drive.sh Prepare d
         - ./.travis/download_drive.sh Prepare e
-        - make prepare_boot configure1 build1
-        - ssh root@192.168.251.2 shutdown || sleep 1
+        - make prepare_boot configure1 build1 shutdown
 
     - stage: Build2.1
       name: openssl libs
       script:
         - ./.travis/download_host_drive.sh Prepare d
         - ./.travis/download_drive.sh Build1 e
-        - make prepare_boot configure2 build2.1
-        - ssh root@192.168.251.2 shutdown || sleep 1
+        - make prepare_boot configure2 build2.1 shutdown
 
     - stage: Build2.2
       name: openssl
       script:
         - ./.travis/download_host_drive.sh Prepare d
         - ./.travis/download_drive.sh Build2.1 e
-        - make prepare_boot build2.2
-        - ssh root@192.168.251.2 shutdown || sleep 1
+        - make prepare_boot build2.2 shutdown
 
     - stage: Build3
       name: libarchive
       script:
         - ./.travis/download_host_drive.sh Prepare d
         - ./.travis/download_drive.sh Build2.2 e
-        - make prepare_boot configure3 build3
-        - ssh root@192.168.251.2 shutdown || sleep 1
+        - make prepare_boot configure3 build3 shutdown
 
     - stage: Build4
       name: openssh
@@ -73,8 +68,7 @@ jobs:
        - ./.travis/download_host_drive.sh Prepare d
        - ./.travis/download_drive.sh Build3 e
        - ./.travis/download_drive.sh Prepare f
-       - make prepare_boot configure4 build4
-       - ssh root@192.168.251.2 shutdown || sleep 1
+       - make prepare_boot configure4 build4 shutdown
        - rm drive_e.img
 
     - stage: Build5
@@ -83,8 +77,7 @@ jobs:
        - ./.travis/download_host_drive.sh Prepare d
        - ./.travis/download_drive.sh Build3 e
        - ./.travis/download_drive.sh Build4 f
-       - make prepare_boot configure5 build5
-       - ssh root@192.168.251.2 shutdown || sleep 1
+       - make prepare_boot configure5 build5 shutdown
        - rm drive_e.img
 
     - stage: Build6
@@ -93,8 +86,7 @@ jobs:
        - ./.travis/download_host_drive.sh Prepare d
        - ./.travis/download_drive.sh Build3 e
        - ./.travis/download_drive.sh Build5 f
-       - make prepare_boot configure6 build6
-       - ssh root@192.168.251.2 shutdown || sleep 1
+       - make prepare_boot configure6 build6 shutdown
        - rm drive_e.img
 
     - stage: Build7
@@ -103,8 +95,7 @@ jobs:
        - ./.travis/download_host_drive.sh Prepare d
        - ./.travis/download_drive.sh Build3 e
        - ./.travis/download_drive.sh Build6 f
-       - make prepare_boot configure7 build7
-       - ssh root@192.168.251.2 shutdown || sleep 1
+       - make prepare_boot configure7 build7 shutdown
        - rm drive_e.img
 
     - stage: Build8
@@ -113,8 +104,7 @@ jobs:
        - ./.travis/download_host_drive.sh Prepare d
        - ./.travis/download_drive.sh Build3 e
        - ./.travis/download_drive.sh Build7 f
-       - make prepare_boot configure8 build8
-       - ssh root@192.168.251.2 shutdown || sleep 1
+       - make prepare_boot configure8 build8 shutdown
        - rm drive_e.img
 
     # stage 8 can build many packages in parallel
