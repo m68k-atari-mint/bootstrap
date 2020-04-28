@@ -24,7 +24,7 @@ install:
     - unset CC
     - unset CXX
     - mkdir -p ~/.ssh && ssh-keygen -t rsa -f ~/.ssh/id_rsa -q -N ""
-    - wget -q -O - https://dl.bintray.com/aranym/aranym-files/snapshots/aranym-1.1.0-trusty-x86_64-e85be35.tar.xz | sudo tar -C /usr/local --strip-components=2 -xJf -
+    - wget -q -O - https://dl.bintray.com/aranym/aranym-files/snapshots/aranym-1.1.0-xenial-x86_64-429ebdf.tar.xz | sudo tar -C /usr/local --strip-components=2 -xJf -
 
 jobs:
   include:

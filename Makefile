@@ -431,7 +431,6 @@ $(HOST_DRIVE)/.texinfo.done: $(DOWNLOADS_DIR)/texinfo.rpm
 
 $(SOURCES_DIR)/bash/.done: $(SOURCES_DIR)/bash.tar.gz
 	cd $(SOURCES_DIR) && tar xzf $< && mv bash-* "bash"
-	cd $(SOURCES_DIR)/bash && cat $(PATCHES_DIR)/bash/bash-4.2-patches/* | patch -p0
 	cd $(SOURCES_DIR)/bash && cat $(PATCHES_DIR)/bash/bash-4.2.53.patch | patch -p1
 	touch $@
 
@@ -468,8 +467,8 @@ $(SOURCES_DIR)/libarchive/.done: $(SOURCES_DIR)/libarchive.tar.gz
 	cd $(SOURCES_DIR) && tar xzf $< && mv libarchive-* "libarchive"
 	touch $@
 
-$(SOURCES_DIR)/make/.done: $(SOURCES_DIR)/make.tar.bz2
-	cd $(SOURCES_DIR) && tar xjf $< && mv make-* "make"
+$(SOURCES_DIR)/make/.done: $(SOURCES_DIR)/make.tar.gz
+	cd $(SOURCES_DIR) && tar xzf $< && mv make-* "make"
 	touch $@
 
 $(SOURCES_DIR)/mintbin/.done: $(SOURCES_DIR)/mintbin.tar.gz
@@ -506,11 +505,11 @@ $(SOURCES_DIR)/zlib/.done: $(SOURCES_DIR)/zlib.tar.xz
 
 $(DOWNLOADS_DIR)/emutos.zip:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "http://downloads.sourceforge.net/project/emutos/emutos/0.9.11/emutos-aranym-0.9.11.zip"
+	$(WGET) $@ "http://downloads.sourceforge.net/project/emutos/emutos/0.9.12/emutos-aranym-0.9.12.zip"
 
 $(DOWNLOADS_DIR)/freemint.zip:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "https://bintray.com/freemint/freemint/download_file?file_path=snapshots-cpu%2F1-19-a3af9bdb%2Ffreemint-1-19-cur-040.zip"
+	$(WGET) $@ "https://dl.bintray.com/freemint/freemint/snapshots-cpu/1-19-be61fce5/freemint-1-19-cur-040.zip"
 
 $(DOWNLOADS_DIR)/bash.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
@@ -530,11 +529,11 @@ $(DOWNLOADS_DIR)/binutils.tar.bz2:
 
 $(DOWNLOADS_DIR)/gcc.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "https://github.com/freemint/m68k-atari-mint-gcc/releases/download/gcc-7_4_0-mint-20190228/gcc-7.4.0-m68020-60mint.tar.bz2"
+	$(WGET) $@ "https://github.com/freemint/m68k-atari-mint-gcc/releases/download/gcc-7_5_0-mint-20191230/gcc-7.5.0-m68020-60mint.tar.bz2"
 
 $(DOWNLOADS_DIR)/mintbin.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "https://github.com/freemint/freemint.github.io/raw/master/builds/mintbin/master/mintbin-6108285.tar.bz2"
+	$(WGET) $@ "https://dl.bintray.com/freemint/freemint/mintbin/0.3-687a06a8/mintbin-0.3-687.tar.bz2"
 
 $(DOWNLOADS_DIR)/mintlib-src.tar.gz:
 	mkdir -p $(DOWNLOADS_DIR)
@@ -592,14 +591,15 @@ $(DOWNLOADS_DIR)/texinfo.rpm:
 
 $(SOURCES_DIR)/bash.tar.gz:
 	mkdir -p $(SOURCES_DIR)
-	$(WGET) $@ "https://ftp.gnu.org/gnu/bash/bash-4.2.tar.gz"
+	$(WGET) $@ "https://ftp.gnu.org/gnu/bash/bash-4.2.53.tar.gz"
 
 $(SOURCES_DIR)/bison.tar.xz:
 	mkdir -p $(SOURCES_DIR)
-	$(WGET) $@ "https://ftp.gnu.org/gnu/bison/bison-3.3.2.tar.xz"
+	$(WGET) $@ "https://ftp.gnu.org/gnu/bison/bison-3.5.4.tar.xz"
 
 $(SOURCES_DIR)/coreutils.tar.xz:
 	mkdir -p $(SOURCES_DIR)
+	# 8.32 requires an updated patch
 	$(WGET) $@ "https://ftp.gnu.org/gnu/coreutils/coreutils-8.31.tar.xz"
 
 $(SOURCES_DIR)/diffutils.tar.xz:
@@ -612,23 +612,23 @@ $(SOURCES_DIR)/fdlibm.tar.gz:
 
 $(SOURCES_DIR)/gawk.tar.xz:
 	mkdir -p $(SOURCES_DIR)
-	$(WGET) $@ "https://ftp.gnu.org/gnu/gawk/gawk-5.0.0.tar.xz"
+	$(WGET) $@ "https://ftp.gnu.org/gnu/gawk/gawk-5.1.0.tar.xz"
 
 $(SOURCES_DIR)/grep.tar.xz:
 	mkdir -p $(SOURCES_DIR)
-	$(WGET) $@ "https://ftp.gnu.org/gnu/grep/grep-3.3.tar.xz"
+	$(WGET) $@ "https://ftp.gnu.org/gnu/grep/grep-3.4.tar.xz"
 
 $(SOURCES_DIR)/libarchive.tar.gz:
 	mkdir -p $(SOURCES_DIR)
-	$(WGET) $@ "https://www.libarchive.org/downloads/libarchive-3.3.3.tar.gz"
+	$(WGET) $@ "https://www.libarchive.org/downloads/libarchive-3.4.2.tar.gz"
 
 $(SOURCES_DIR)/m4.tar.xz:
 	mkdir -p $(SOURCES_DIR)
 	$(WGET) $@ "https://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.xz"
 
-$(SOURCES_DIR)/make.tar.bz2:
+$(SOURCES_DIR)/make.tar.gz:
 	mkdir -p $(SOURCES_DIR)
-	$(WGET) $@ "https://ftp.gnu.org/gnu/make/make-4.2.1.tar.bz2"
+	$(WGET) $@ "https://ftp.gnu.org/gnu/make/make-4.3.tar.gz"
 
 $(SOURCES_DIR)/mintbin.tar.gz:
 	mkdir -p $(SOURCES_DIR)
@@ -640,11 +640,12 @@ $(SOURCES_DIR)/mintlib.tar.gz:
 
 $(SOURCES_DIR)/openssh.tar.gz:
 	mkdir -p $(SOURCES_DIR)
-	$(WGET) $@ "https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-8.0p1.tar.gz"
+	# 8.2p1 requires an updated patch (SA_RESTART undefined)
+	$(WGET) $@ "https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-8.1p1.tar.gz"
 
 $(SOURCES_DIR)/openssl.tar.gz:
 	mkdir -p $(SOURCES_DIR)
-	$(WGET) $@ "https://www.openssl.org/source/openssl-1.0.2r.tar.gz"
+	$(WGET) $@ "https://www.openssl.org/source/openssl-1.0.2u.tar.gz"
 
 $(SOURCES_DIR)/opkg.tar.gz:
 	mkdir -p $(SOURCES_DIR)
@@ -652,7 +653,7 @@ $(SOURCES_DIR)/opkg.tar.gz:
 
 $(SOURCES_DIR)/sed.tar.xz:
 	mkdir -p $(SOURCES_DIR)
-	$(WGET) $@ "https://ftp.gnu.org/gnu/sed/sed-4.7.tar.xz"
+	$(WGET) $@ "https://ftp.gnu.org/gnu/sed/sed-4.8.tar.xz"
 
 $(SOURCES_DIR)/zlib.tar.xz:
 	mkdir -p $(SOURCES_DIR)
