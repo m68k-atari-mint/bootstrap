@@ -431,7 +431,7 @@ $(HOST_DRIVE)/.texinfo.done: $(DOWNLOADS_DIR)/texinfo.rpm
 
 $(SOURCES_DIR)/bash/.done: $(SOURCES_DIR)/bash.tar.gz
 	cd $(SOURCES_DIR) && tar xzf $< && mv bash-* "bash"
-	cd $(SOURCES_DIR)/bash && cat $(PATCHES_DIR)/bash/bash-4.2.53.patch | patch -p1
+	cd $(SOURCES_DIR)/bash && cat $(PATCHES_DIR)/bash-4.2.53.patch | patch -p1
 	touch $@
 
 $(SOURCES_DIR)/bison/.done: $(SOURCES_DIR)/bison.tar.xz
