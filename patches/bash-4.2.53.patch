@@ -1,30 +1,29 @@
-diff --git a/expr.c b/expr.c
-index 98d75b6..1281392 100644
---- a/expr.c
-+++ b/expr.c
-@@ -326,7 +326,11 @@ expr_bind_array_element (tok, ind, rhs)
+diff -ru bash-4.2.53.orig/expr.c bash-4.2.53/expr.c
+--- bash-4.2.53.orig/expr.c	2012-11-01 02:24:54.000000000 +0100
++++ bash-4.2.53/expr.c	2020-04-29 09:14:12.927643400 +0200
+@@ -326,7 +326,11 @@
    char ibuf[INT_STRLEN_BOUND (arrayind_t) + 1], *istr;
-
+ 
    istr = fmtumax (ind, 10, ibuf, sizeof (ibuf), 0);
 +#if defined (ARRAY_VARS)
    vname = array_variable_name (tok, (char **)NULL, (int *)NULL);
 +#else
 +  vname = tok;
 +#endif
-
+ 
    llen = strlen (vname) + sizeof (ibuf) + 3;
    lhs = xmalloc (llen);
-@@ -1048,8 +1052,8 @@ expr_streval (tok, e, lvalue)
+@@ -1048,8 +1052,8 @@
  	jump_to_top_level (FORCE_EOF);
      }
-
+ 
 -  ind = -1;
  #if defined (ARRAY_VARS)
 +  ind = -1;
    /* Second argument of 0 to get_array_value means that we don't allow
       references like array[@].  In this case, get_array_value is just
       like get_variable_value in that it does not return newly-allocated
-@@ -1066,7 +1070,9 @@ expr_streval (tok, e, lvalue)
+@@ -1066,7 +1070,9 @@
        lvalue->tokstr = tok;	/* XXX */
        lvalue->tokval = tval;
        lvalue->tokvar = v;	/* XXX */
@@ -32,25 +31,24 @@ index 98d75b6..1281392 100644
        lvalue->ind = ind;
 +#endif
      }
-
+ 	  
    return (tval);
-diff --git a/subst.c b/subst.c
-index 75f31da..381d1fc 100644
---- a/subst.c
-+++ b/subst.c
-@@ -7230,7 +7230,11 @@ parameter_brace_expand (string, indexp, quoted, pflags, quoted_dollar_atp, conta
+diff -ru bash-4.2.53.orig/subst.c bash-4.2.53/subst.c
+--- bash-4.2.53.orig/subst.c	2014-03-31 22:27:53.000000000 +0200
++++ bash-4.2.53/subst.c	2020-04-29 09:20:51.047965000 +0200
+@@ -7230,7 +7230,11 @@
    /* If this is a substring spec, process it and add the result. */
    if (want_substring)
      {
 +#if defined (ARRAY_VARS)
        temp1 = parameter_brace_substring (name, temp, ind, value, quoted, (tflag & W_ARRAYIND) ? AV_USEIND : 0);
 +#else
-+	  temp1 = parameter_brace_substring (name, temp, ind, value, quoted, 0);
++      temp1 = parameter_brace_substring (name, temp, ind, value, quoted, 0);
 +#endif
        FREE (name);
        FREE (value);
        FREE (temp);
-@@ -7254,7 +7258,11 @@ parameter_brace_expand (string, indexp, quoted, pflags, quoted_dollar_atp, conta
+@@ -7254,7 +7258,11 @@
      }
    else if (want_patsub)
      {
@@ -62,7 +60,7 @@ index 75f31da..381d1fc 100644
        FREE (name);
        FREE (value);
        FREE (temp);
-@@ -7316,7 +7324,11 @@ parameter_brace_expand (string, indexp, quoted, pflags, quoted_dollar_atp, conta
+@@ -7316,7 +7324,11 @@
  	  FREE (value);
  	  break;
  	}
@@ -74,18 +72,15 @@ index 75f31da..381d1fc 100644
        free (temp);
        free (value);
        free (name);
-diff --git a/variables.c b/variables.c
-index e9730f0..b352eb7 100644
---- a/variables.c
-+++ b/variables.c
-@@ -167,6 +167,10 @@ static int winsize_assignment;		/* currently assigning to LINES or COLUMNS */
- #endif
-
- /* Some forward declarations. */
+diff -ru bash-4.2.53.orig/variables.h bash-4.2.53/variables.h
+--- bash-4.2.53.orig/variables.h	2011-02-25 18:07:41.000000000 +0100
++++ bash-4.2.53/variables.h	2020-04-29 09:17:18.672237400 +0200
+@@ -384,7 +384,7 @@
+ extern void sv_histtimefmt __P((char *));
+ #endif /* HISTORY */
+ 
+-#if defined (HAVE_TZSET) && defined (PROMPT_STRING_DECODE)
 +#if defined (HAVE_TZSET)
-+void sv_tz (char *);
-+#endif
-+
- static void create_variable_tables __P((void));
-
- static void set_machine_vars __P((void));
+ extern void sv_tz __P((char *));
+ #endif
+ 
