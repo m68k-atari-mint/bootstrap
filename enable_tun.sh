@@ -1,6 +1,6 @@
 #!/bin/sh
 
-chmod +s /usr/bin/aratapif
+chmod +s $(which aratapif)
 
 modprobe tun
 chown $1 /dev/net/tun
