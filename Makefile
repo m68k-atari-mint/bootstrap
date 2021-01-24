@@ -350,8 +350,8 @@ $(HOST_DRIVE)/.mintbin.done: $(DOWNLOADS_DIR)/mintbin.tar.bz2
 
 $(HOST_DRIVE)/.mintlib.done: mintlib-src/.done
 	cd "mintlib-src" && \
-	make SHELL=/bin/bash CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="/usr" && \
-	make SHELL=/bin/bash CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="/usr" install DESTDIR=$(HOST_DRIVE)
+	make SHELL=/bin/bash CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no && \
+	make SHELL=/bin/bash CROSS=yes CC='m68k-atari-mint-gcc -m68020-60' WITH_020_LIB=no WITH_V4E_LIB=no prefix="$(HOST_DRIVE)/usr" install
 	touch $@
 
 mintlib-src/.done: $(DOWNLOADS_DIR)/mintlib-src.tar.gz
@@ -505,11 +505,11 @@ $(SOURCES_DIR)/zlib/.done: $(SOURCES_DIR)/zlib.tar.xz
 
 $(DOWNLOADS_DIR)/emutos.zip:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "http://downloads.sourceforge.net/project/emutos/emutos/0.9.12/emutos-aranym-0.9.12.zip"
+	$(WGET) $@ "http://downloads.sourceforge.net/project/emutos/emutos/1.0.1/emutos-aranym-1.0.1.zip"
 
 $(DOWNLOADS_DIR)/freemint.zip:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "https://dl.bintray.com/freemint/freemint/snapshots-cpu/1-19-be61fce5/freemint-1-19-cur-040.zip"
+	$(WGET) $@ "https://dl.bintray.com/freemint/freemint/snapshots-cpu/1-19-066b29f6/freemint-1-19-cur-040.zip"
 
 $(DOWNLOADS_DIR)/bash.rpm:
 	mkdir -p $(DOWNLOADS_DIR)
@@ -533,7 +533,7 @@ $(DOWNLOADS_DIR)/gcc.tar.bz2:
 
 $(DOWNLOADS_DIR)/mintbin.tar.bz2:
 	mkdir -p $(DOWNLOADS_DIR)
-	$(WGET) $@ "https://dl.bintray.com/freemint/freemint/mintbin/0.3-687a06a8/mintbin-0.3-687.tar.bz2"
+	$(WGET) $@ "https://dl.bintray.com/freemint/freemint/mintbin/0.3-d38d6ffe/mintbin-0.3-d38.tar.bz2"
 
 $(DOWNLOADS_DIR)/mintlib-src.tar.gz:
 	mkdir -p $(DOWNLOADS_DIR)
